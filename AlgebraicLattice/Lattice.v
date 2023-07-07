@@ -36,6 +36,19 @@ Global Notation "x \in X" := (In _ X x)(at level 30) .
 Global Notation "{set  T }" := (Ensemble T)(at level 10).
 
 (****************************************************)
+(* Properties of operators *)
+(****************************************************)
+
+Definition mono {L1 L2 : lattice}(f : L1 -> L2) :=
+  forall a b, a ≺ b -> f a ≺ f b.
+
+Definition antimono {L1 L2 : lattice}(f : L1 -> L2) :=
+  forall a b, a ≺ b -> f b ≺ f a.  
+
+Definition directed  {L : lattice}(X : {set L}) :=
+  forall x y, x \in X  -> y \in X -> exists z, z \in X /\ x ≺ z /\ y ≺ z.
+
+(****************************************************)
 (* theorems *)
 (****************************************************)
 

@@ -35,16 +35,8 @@ Definition bigcup {T} (X : {set {set T}}) : {set T} :=
 Definition bigcap {T} (X : {set {set T}}) : {set T}:=
   fun x => forall I, I \in X -> x \in I.
 
-Definition mono {L1 L2 : lattice}(f : L1 -> L2) :=
-  forall a b, a ≺ b -> f a ≺ f b.
-
-Definition directed  {L : lattice}(X : {set L}) :=
-  forall x y, x \in X  -> y \in X -> exists z, z \in X /\ x ≺ z /\ y ≺ z.
-
-
 Definition continuous  {L : complat}(f : L -> L) :=
     forall X : {set L}, directed X -> f (sup X) = sup (Im _ _ X f).
-
 
 Definition is_lfp  {L : lattice}(f : L -> L) a :=
   f a = a /\ forall b, f b = b -> a ≺ b.
