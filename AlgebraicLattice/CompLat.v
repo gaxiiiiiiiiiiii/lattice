@@ -41,9 +41,6 @@ Definition mono {L1 L2 : lattice}(f : L1 -> L2) :=
 Definition directed  {L : lattice}(X : {set L}) :=
   forall x y, x \in X  -> y \in X -> exists z, z \in X /\ x ≺ z /\ y ≺ z.
 
-Definition directed'  {L : lattice}(X : {set L}) :=
-  (forall (Y : {set L}), Included _ Y  X -> exists y, y \in X /\ (forall x, x \in Y -> x ≺ y)).
-
 
 Definition continuous  {L : complat}(f : L -> L) :=
     forall X : {set L}, directed X -> f (sup X) = sup (Im _ _ X f).
