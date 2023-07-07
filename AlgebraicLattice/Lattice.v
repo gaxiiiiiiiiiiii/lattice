@@ -48,12 +48,16 @@ Definition antimono {L1 L2 : lattice}(f : L1 -> L2) :=
 Definition directed  {L : lattice}(X : {set L}) :=
   forall x y, x \in X  -> y \in X -> exists z, z \in X /\ x ≺ z /\ y ≺ z.
 
+Global Notation "f ∘ g" := (fun x => f (g x))(at level 40).
+
 (****************************************************)
 (* theorems *)
 (****************************************************)
 
 Section theorem.
   Variable L : lattice.
+
+  (* algebraic lattice is equivalent to partial order *)
 
   Lemma refl a :
     a ≺ a.
@@ -165,6 +169,29 @@ Section theorem.
     move : (upb' a b) => [Ha' Hb'].
     move : (sup' Ha Hb) => H'.
     apply antisym; auto.
+  Qed.
+
+  (* about operator *)
+
+  Lemma natimono_compose_mono {L1 L2 L3 : lattice}(f : L1 -> L2)(g : L2 -> L3) :
+    antimono f -> antimono g -> mono (g ∘ f).
+  Proof. 
+    move => Hf Hg x y H; eauto.
+  Qed.
+
+  Lemma mono_antimono_constant (f : L -> L) :
+    mono f -> antimono f -> forall x y, f x = f y.
+  Proof.
+    move => Hm Ha x y.
+    apply antisym.
+    - move : (lowb' x y) => [low_x low_y].
+      apply trans with (f (meet x y)).      
+      - apply Ha; auto.
+      - apply Hm; auto.      
+    - move : (upb' x y) => [up_x up_y].
+      apply trans with (f (join x y)).
+      - apply Hm; auto.
+      - apply Ha; auto.
   Qed.
 
 
