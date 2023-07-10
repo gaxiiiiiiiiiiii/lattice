@@ -171,6 +171,19 @@ Section theorem.
     apply antisym; auto.
   Qed.
 
+  Lemma join_meet a b :
+    a ≺ b <-> join a b = b.
+  Proof.
+    split.
+    - move => <-.
+      rewrite joinC.
+      rewrite meetC.
+      rewrite meetK; auto.
+    - move => <- .
+      move : (upb' a b); case; auto.
+  Qed.
+
+
   (* about operator *)
 
   Lemma antimono_compose_mono {L1 L2 L3 : lattice}(f : L1 -> L2)(g : L2 -> L3) :
