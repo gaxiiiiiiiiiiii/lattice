@@ -173,7 +173,7 @@ Section theorem.
 
   (* about operator *)
 
-  Lemma natimono_compose_mono {L1 L2 L3 : lattice}(f : L1 -> L2)(g : L2 -> L3) :
+  Lemma antimono_compose_mono {L1 L2 L3 : lattice}(f : L1 -> L2)(g : L2 -> L3) :
     antimono f -> antimono g -> mono (g ∘ f).
   Proof. 
     move => Hf Hg x y H; eauto.
