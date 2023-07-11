@@ -5,6 +5,9 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+Notation "x \in X" := (In _ X x)(at level 30) .
+Notation "{set  T }" := (Ensemble T)(at level 10).
+Notation "f ∘ g" := (fun x => f (g x))(at level 40).
 
 Module lattice.
 
@@ -43,12 +46,10 @@ Module lattice.
     Coercion sort : type >-> Sortclass.
     Notation lattice := type.
     Notation latticeMixin := Mixin.
-
     
     Definition meet T := meet (class T).
     Definition join T := join (class T).
-    (* Definition le {T : lattice} (x y : T) := @meet T x y = x. *)
-
+    Definition le (T : lattice) (x y : T) := meet x y = x.
 
     Lemma meetC (T : lattice) : forall (a b : T), meet a b = meet b a.
     Proof. apply meetC. Qed.
@@ -65,14 +66,8 @@ Module lattice.
 
 
     Notation "x ∧ y" := (meet x y)(at level 30).
-    Notation "x ∨ y" := (join x y)(at level 30).
-    Definition le {T : lattice} (x y : T) := meet x y = x.
+    Notation "x ∨ y" := (join x y)(at level 30).   
     Notation "x ≺ y" := (le x y)(at level 40). 
-
-    Global Notation "x \in X" := (In _ X x)(at level 30) .
-    Global Notation "{set  T }" := (Ensemble T)(at level 10).
-    Global Notation "f ∘ g" := (fun x => f (g x))(at level 40).
-
    
   End Exports.
 
@@ -279,12 +274,9 @@ Module complat.
 
     Variables  (cT : type).
     Definition class := let: Pack _ _ c := cT return class_of (ops_ cT) in c.
-    (* Definition ops := let: Pack _ p _ := cT return lattice.ops (sort cT) in p. *)
-
     Definition lattice := @lattice.Pack (sort cT) (ops_ cT) (base class).    
 
-    End ClassDef.
-  
+  End ClassDef.  
 
   Module  Exports.
     Coercion base : class_of >-> lattice.class_of.
@@ -301,9 +293,7 @@ Module complat.
     Definition bot {T} := @inf T (Full_set T).
     Definition top {T} := @sup T (Full_set T).    
     Notation "⊤" := top.
-    Notation "⊥" := bot.
-    (* Notation "⊥" := (inf (Full_set _)). *)
-    (* Notation "⊤" := (sup (Full_set _)). *)
+    Notation "⊥" := bot.    
 
     Lemma is_upb (T : complat) : forall (A : Ensemble T) a, a \in A -> a ≺ (sup A).
     Proof. apply is_upb. Qed.
@@ -612,8 +602,8 @@ Module bilattice.
 
 
     Record class_of T (opst opsk : lattice.ops T) := Class {
-      base1 : complat.class_of opst;
-      base2 : complat.class_of opsk;
+      baset : complat.class_of opst;
+      basek : complat.class_of opsk;
       mixin : mixin_of opst opsk
     }.
 
@@ -627,26 +617,21 @@ Module bilattice.
     Variables  (cT : type).
     Definition class := let: Pack _ _ _ c := cT return class_of (opst cT) (opsk cT) in c.    
 
-    Definition complatt := @complat.Pack (sort cT) (opst cT) (base1 class).
-    Definition latticet := @lattice.Pack (sort cT) (opst cT) (base1 class).
-    Definition complatk := @complat.Pack (sort cT) (opsk cT) (base2 class).
-    Definition latticek := @lattice.Pack (sort cT) (opsk cT) (base2 class).
-    (* Definition complat2 := @complat.Pack (sort cT) (opsk cT) (base2 class). *)
+    Definition complatt := @complat.Pack (sort cT) (opst cT) (baset class).
+    Definition latticet := @lattice.Pack (sort cT) (opst cT) (baset class).
+    Definition complatk := @complat.Pack (sort cT) (opsk cT) (basek class).
+    Definition latticek := @lattice.Pack (sort cT) (opsk cT) (basek class).
+
 
     End ClassDef.
   
 
   Module  Exports.    
-    Coercion base1 : class_of >-> complat.class_of.
-    (* Coercion base2 : class_of >-> complat.class_of. *)
+    Coercion baset : class_of >-> complat.class_of.
     Coercion mixin : class_of >-> mixin_of.
     Coercion sort : type >-> Sortclass.
     Coercion complatt : type >-> complat.type.
     Coercion latticet : type >-> lattice.type.
-    (* Coercion complatk : type >-> complat.type. *)
-    (* Coercion latticek : type >-> lattice.type. *)
-    
-    (* Coercion complat2 : type >-> complat.type. *)
     Canonical complatt.
     Canonical latticet.
     Canonical complatk.
@@ -658,7 +643,6 @@ Module bilattice.
     Definition meetk T := meetk (class T).
     Definition joink T := joink (class T).
     Definition lek T := lek (class T).
-    (* Definition let_ T := let_ (class T). *)
     Definition bott T := @bot (complatt T).
     Definition topt T := @top (complatt T).
     Definition botk T := @bot (complatk T).
@@ -666,7 +650,6 @@ Module bilattice.
 
     Notation "x <*> y" := (meetk x y)(at level 30).
     Notation "x <+> y" := (joink x y)(at level 30).
-    (* Notation "x ≺_t y" := (let_ x y) (at level 40). *)
     Notation "x ≺_k y" := (lek x y)(at level 40).
     Notation "¬ x" := (neg x)(at level 10).
     Notation TRUE := topt.
