@@ -47,7 +47,7 @@ Definition is_gfp  {L : lattice}(f : L -> L) a :=
 Definition lfp {L : complat}(f : L -> L) (Hf : mono f) :=
   (inf (fun x => f x ≺ x)).
 
-Definition gpf {L : complat}(f : L -> L) (Hf : mono f) :=
+Definition gfp {L : complat}(f : L -> L) (Hf : mono f) :=
   (sup (fun x => x ≺ f x)).
 
 Fixpoint pow {L : complat}(f : L -> L) (n : nat) : L -> L :=
@@ -102,7 +102,7 @@ Section theorem.
   (* tarski's fixpoint theorem *)
 
   Lemma tarski_lfp (f : L -> L) (Hf : mono f):
-    is_lfp f (inf (fun x => f x ≺ x)).
+    is_lfp f (lfp Hf).
   Proof.
     remember (fun x => f x ≺ x) as G.
     remember (inf G) as g.
@@ -142,7 +142,7 @@ Section theorem.
   Qed.
 
   Lemma tarski_gfp (f : L -> L) (Hf : mono f):
-    is_gfp f (sup (fun x => x ≺ f x)).
+    is_gfp f (gfp Hf).
   Proof.
     remember (fun x => x ≺ f x) as G.
     remember (sup G) as g.
@@ -312,7 +312,3 @@ Section theorem.
   Qed.
 
 End theorem.
-
-
-
-
