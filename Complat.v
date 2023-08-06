@@ -1,7 +1,7 @@
 Require Export Lattice.
 
 
-Notation "a == b" := (eqset a b) (at level 70, no associativity).
+Global Notation "a == b" := (eqset a b) (at level 70, no associativity).
 Definition singleton {T : hSet} (x : T) : {set : T} := fun y => y == x.
 Definition couple {T : hSet} (x y : T) : {set : T} := (singleton x ∪ singleton y) % subtype.
 
@@ -37,8 +37,8 @@ Definition inf {T : hSet} {L : complat T} (A : {set : L}) : L := pr1 (pr2 (pr2 L
 
 Definition bot {T : hSet} {L : complat T} : L := inf fullset.
 Definition top {T : hSet} {L : complat T} : L := sup fullset.
-Notation "⊥" := bot.
-Notation "⊤" := top.
+Global Notation "⊥" := bot.
+Global Notation "⊤" := top.
 
 Definition is_upb {T : hSet} {L : complat T} :
   ∏ A a, a ∈ A -> a ≺ sup A := pr1 (pr2 (pr2 (pr2 L))).

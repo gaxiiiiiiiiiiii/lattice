@@ -31,10 +31,10 @@ Infix "<+>" := kjoin.
 Infix "≺t" := tle(at level 40).
 Infix "≺k" := kle(at level 40).
 
-Notation "⊓ X" := (tinf X)(at level 30).
-Notation "⊔ X" := (tsup X)(at level 30).
-Notation Π  := kinf.
-Notation Σ := ksup.
+Global Notation "⊓ X" := (tinf X)(at level 30).
+Global Notation "⊔ X" := (tsup X)(at level 30).
+Global Notation Π  := kinf.
+Global Notation Σ := ksup.
 
 
 Section bilatProperties.
@@ -257,7 +257,7 @@ Section compdistrProperties.
     pr222 (pr222 (pr222 (pr222 (pr222 (pr22 L))))).
   
 End compdistrProperties.
-§
+
 
 Definition isNegation {T} {L : bilattice T} (bneg : L -> L) :=
   (∏ x y, x ≺t y -> bneg y ≺t bneg x) ×

@@ -37,9 +37,9 @@ Definition meet {X : hSet} {l : lattice X} (x y : l) : l := pr1 l x y.
 Definition join {X : hSet} {l : lattice X} (x y : l) : l := pr1 (pr2 l) x y.
 Definition le {X : hSet} {l : lattice X} : hrel l := fun x y => (meet x y = x)%logic.
 
-Infix "<*>" := meet(at level 30).
-Infix "<+>" := join (at level 30).
-Infix "≺" := le (at level 40).
+Global Infix "<*>" := meet(at level 30).
+Global Infix "<+>" := join (at level 30).
+Global Infix "≺" := le (at level 40).
 
 
 Section transLheory.
@@ -199,12 +199,12 @@ End transLheory.
 (* Monotony and etc. *)
 (*********************)
 
-Notation "{set : X }" := (hsubtype X).
+Global Notation "{set : X }" := (hsubtype X).
 Definition In {T : hSet} (A : {set : T}) (a : T) := A a. 
-Notation "a ∈ A" := (In A a) (at level 70).
+Global Notation "a ∈ A" := (In A a) (at level 70).
 
 Definition fullset {T : hSet} : {set : T} := fun _ => htrue.
-Notation "∅" := (emptysubtype _).
+Global Notation "∅" := (emptysubtype _).
 
 
 
