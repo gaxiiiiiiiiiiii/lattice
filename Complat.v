@@ -1,130 +1,99 @@
 Require Export Lattice.
 
-Set Implicit Arguments.
-Unset Strict Implicit.
-Unset Printing Implicit Defensive.
+Locate "=".
 
-Module complat.
-  Section ClassDef.
-
-    Record mixin_of T (ops_ : lattice.ops T ):= Mixin {   
-      meetc := lattice.meet_ ops_;
-      joinc := lattice.join_ ops_;
-      lec := fun a b => meetc a b = a;
-
-      sup : Ensemble T -> T;
-      inf : Ensemble T -> T;
-      
-      is_upb : forall (A : Ensemble T) a, a \in A -> lec a (sup A);
-      is_sup : forall (A : Ensemble T) a,
-              (forall b, b \in A -> lec b a) -> lec (sup A) a;
-      is_lowb : forall (A : Ensemble T) a, a \in A -> lec (inf A)a;
-      is_inf : forall (A : Ensemble T) a,
-              (forall b, b \in A -> lec a b) -> lec a (inf A);    
-    }.
+Notation "a == b" := (eqset a b) (at level 70, no associativity).
+Definition singleton {T : hSet} (x : T) : {set : T} := fun y => y == x.
+Definition couple {T : hSet} (x y : T) : {set : T} := (singleton x ∪ singleton y) % subtype.
 
 
-    Record class_of T (ops_ : lattice.ops T) := Class {
-      base : lattice.class_of ops_;
-      mixin : mixin_of ops_
-    }.
 
-    Structure type := Pack {
-      sort : Type; 
-      ops_ : lattice.ops sort;  
-      _ : class_of ops_
-    }.
+Definition isComplatOp {T : hSet} (L : lattice T) (sup inf : {set : T} -> T) :=
+  (∏ (A : {set : L}) (a : L), a ∈ A ->  a ≺ sup A) × 
+  (∏ (A : {set : L}) (a : L), (∏ (b : L), b ∈ A -> b ≺ a) -> sup A ≺ a) ×
+  (∏ (A : {set : L}) (a : L), a ∈ A -> inf A ≺ a) ×  
+  (∏ (A : {set : L}) (a : L), (∏ (b : L), b ∈ A -> a ≺ b) -> a ≺ inf A).
 
-    Variables  (cT : type).
-    Definition class := let: Pack _ _ c := cT return class_of (ops_ cT) in c.
-    Definition lattice := @lattice.Pack (sort cT) (ops_ cT) (base class). 
-    Definition tblattice : tblattice.
-    Proof.
-      apply  (@tblattice.Pack (sort cT) (ops_ cT)).
-      constructor.
-      - apply (base class).
-      - pose top := @sup (sort cT)(ops_ cT) (mixin class) (Full_set (sort cT)).
-        pose bot := @inf (sort cT)(ops_ cT) (mixin class) (Full_set (sort cT)).
-        eapply (tblattice.Mixin (top := top) (bot := bot)) => x.
-        * apply is_upb; constructor.
-        * apply is_lowb; constructor.
-    Defined.
+Lemma isaprop_isComplatOp {T : hSet} {L : lattice T} (sup inf : {set : T} -> T) :
+  isaprop (isComplatOp L sup inf).
+Proof.
+  repeat apply isapropdirprod;
+  (apply impred => X; apply impred => x; apply impred => H);
+  apply propproperty.
+Defined.
 
-  End ClassDef.  
+Definition complat (T : hSet) : UU :=
+  ∑ (L : lattice T)(sup inf : {set : T} -> T), isComplatOp L sup inf.
 
-  Module  Exports.
-    Coercion base : class_of >-> lattice.class_of.
-    Coercion mixin : class_of >-> mixin_of.
-    Coercion sort : type >-> Sortclass.
-    Coercion lattice : type >-> lattice.type.
-    Coercion tblattice : type >-> tblattice.type.
-    Canonical lattice.
-    Canonical tblattice.
-    Notation complat := type.
-    Notation complatMixin := mixin_of.    
+Definition make_complat {T : hSet} {L : lattice T} (sup inf : {set : L} -> L) 
+  (H : isComplatOp L sup inf) : complat L := L,, sup,, inf,, H.
 
-    Definition sup T := sup (class T).
-    Definition inf T := inf (class T).
-    Definition lec T := lec (class T).
-    Definition bot {T} := @inf T (Full_set T).
-    Definition top {T} := @sup T (Full_set T).    
-    Notation "⊤" := top.
-    Notation "⊥" := bot.    
 
-    Lemma is_upb (T : complat) : forall (A : Ensemble T) a, a \in A -> a ≺ (sup A).
-    Proof. apply is_upb. Qed.
-    Lemma is_sup ( T : complat) : forall (A : Ensemble T) a,
-            (forall b, b \in A -> b ≺ a) -> (sup A) ≺ a.
-    Proof. apply is_sup. Qed.
-    Lemma is_lowb (T : complat) : forall (A : Ensemble T) a, a \in A -> (inf A) ≺ a.
-    Proof. apply is_lowb. Qed.
-    Lemma is_inf (T : complat) : forall (A : Ensemble T) a,
-            (forall b, b \in A -> a ≺ b) -> a ≺ (inf A).
-    Proof. apply is_inf. Qed.
+Coercion complatToLattice (T : hSet) : complat T -> lattice T := pr1.
+Coercion complatToSetOp (T : hSet) : complat T -> hSet := fun L => latticeToSet (pr1 L).
 
-  End Exports.
-End complat.
 
-Export complat.Exports.
+Definition sup {T : hSet} {L : complat T} (A : {set : L}) : L := pr1 (pr2 L) A.
+Definition inf {T : hSet} {L : complat T} (A : {set : L}) : L := pr1 (pr2 (pr2 L)) A.
+Check fullset.
+Definition bot {T : hSet} {L : complat T} : L := inf fullset.
+Definition top {T : hSet} {L : complat T} : L := sup fullset.
+Notation "⊥" := bot.
+Notation "⊤" := top.
+
+Definition is_upb {T : hSet} {L : complat T} :
+  ∏ A a, a ∈ A -> a ≺ sup A := pr1 (pr2 (pr2 (pr2 L))).
+Definition is_sup {T : hSet} {L : complat T} :
+  ∏ A a, (∏ b, b ∈ A -> b ≺ a) -> sup A ≺ a := pr1 (pr2 (pr2 (pr2 (pr2 L)))).
+Definition is_lowb {T : hSet} {L : complat T} :
+  ∏ A a, a ∈ A -> inf A ≺ a := pr1 (pr2 (pr2 (pr2 (pr2 (pr2 L))))).
+Definition is_inf {T : hSet} {L : complat T} :
+  ∏ A a, (∏ b, b ∈ A -> a ≺ b) -> a ≺ inf A := pr2 (pr2 (pr2 (pr2 (pr2 (pr2 L))))).
+
 
 Section complatTheory.
+  
+  Definition continuous  {T : hSet}{L : complat T}(f : L -> L) :=
+    ∏ X, directed X -> f (sup X) = sup (image_hsubtype X f).
+  
 
-  Definition continuous  {L : complat}(f : L -> L) :=
-      forall X : {set L}, directed X -> f (sup X) = sup (Im _ _ X f).
+  Definition is_lfp  {T : hSet}{L : lattice T}(f : L -> L) a : Type :=
+    (f a = a) × (∏ b, f b = b -> a ≺ b).
+  
+  
+  Definition is_gfp  {T : hSet}{L : lattice T}(f : L -> L) a : Type :=
+    (f a = a) × (∏ b, f b = b -> b ≺ a).
 
-  Definition is_lfp  {L : lattice}(f : L -> L) a :=
-    f a = a /\ forall b, f b = b -> a ≺ b.
-
-  Definition is_gfp  {L : lattice}(f : L -> L) a :=
-    f a = a /\ forall b, f b = b -> b ≺ a.
-
-  Definition lfp {L : complat}(f : L -> L) (Hf : mono f) :=
+  Definition lfp {T : hSet}{L : complat T}(f : L -> L) (Hf : mono f) :=
     (inf (fun x => f x ≺ x)).
 
-  Definition gfp {L : complat}(f : L -> L) (Hf : mono f) :=
+  Definition gfp {T : hSet}{L : complat T}(f : L -> L) (Hf : mono f) :=
     (sup (fun x => x ≺ f x)).
 
-  Fixpoint pow {L : complat}(f : L -> L) (n : nat) : L -> L :=
-    fun X => match n with
-    | 0 => X
-    | S n' => f (pow f (n') X)
-    end.
+  Definition pow {T : hSet} {L : complat T} (f : L -> L)  (n : nat) : L -> L.
+  Proof.
+    move => x.
+    apply (nat_rect (fun _ => L) x (fun _ acc => f acc ) n).
+  Defined.
 
-  Definition chain {L : complat }(f : L -> L) : {set L} :=
-    fun X => exists n, X = pow f n ⊥.
+  Definition chain {X : hSet} {L : complat X} (f : L -> L) : {set : L} :=
+    fun x => (∃ n, x = pow f n ⊥).
 
-  Definition klfp {L : complat}(f : L -> L) := sup (chain f).
-
-  Variable L : complat.
+  Definition kleene_lfp {T : hSet}{L : complat T}(f : L -> L) (Hf : mono f) :=
+    sup (chain f).
+  
+  Variable T : hSet.
+  Variable L : complat T.
   Section misc.
-    Variable X X' : {set L}.
-    Hypotheses H : Included _ X X'.
+    Variable X X' : {set : L}.
+    Hypotheses H : (X ⊆ X')%subtype.
 
     Theorem inf_antimono :
       inf X' ≺ inf X.
     Proof.
       apply is_inf => b Hb.
-      apply is_lowb; auto.
+      apply is_lowb.      
+      apply (H b) => //.      
     Qed.
 
     Theorem sup_mono :
@@ -132,77 +101,89 @@ Section complatTheory.
     Proof.
       apply is_sup => b Hb.
       apply is_upb; auto.
+      apply (H b); auto.
     Qed.
 
-    Theorem inf_le_sup :
-      X <> (Empty_set _) -> inf X ≺ sup X.
+    (* Theorem nonempty_has_ellm :
+      X != ∅ -> ∃ x, x ∈ X.
     Proof.
+    Abort. *)
+
+
+    (* Theorem inf_le_sup :
+      X != ∅ -> inf X ≺ sup X.
+    Proof.
+      Search (∅).
       move /not_empty_Inhabited => HX.
       inversion HX.
       eapply trans with x.
       - apply is_lowb; auto.
       - apply is_upb; auto.
-    Qed.
+    Qed. *)
   End misc.
 
   (* tarski's fixpoint theorem *)
 
   Lemma tarski_lfp (f : L -> L) (Hf : mono f):
-    is_lfp f (lfp Hf).
+    is_lfp f (lfp f Hf).
   Proof.
-    remember (fun x => f x ≺ x) as G.
+    remember ((fun x => f x ≺ x) : {set : L}) as G.
     remember (inf G) as g.
-    have HG : inf G \in G. {
+    have HG : inf G ∈ G. {
       subst.
       apply is_inf => y Hy.
-      apply trans with (f y); auto.
+      apply transL with (f y); auto.
       apply Hf.
       apply is_lowb; auto.
     }
     have Hg : f g ≺ g by subst.
+    unfold is_lfp.
     split.
-    - subst g G; apply antisym; auto.
+    - subst g G; apply antisymL; auto.
       apply is_lowb; simpl.
       apply Hf; auto.
-    - move => b Hb.
-      subst g G.
+    - 
+      move => b Hb.
+      subst g G. simpl in *.
       apply is_lowb.
       unfold In.
       rewrite Hb.
-      apply refl.
+      apply reflL.
   Qed.
 
 
   Lemma tarski_lfp_gg (f : L -> L) (Hf : mono f) :
-    inf (fun x => f x ≺ x) = inf (fun x => f x = x).
+    inf (fun x => f x ≺ x) = inf (fun x => f x == x).
   Proof.
     remember (fun x => f x ≺ x) as G.
     remember (inf G) as g.
-    have : f g = g /\ forall b : L, f b = b -> g ≺ b. {
-      move : (tarski_lfp Hf); case; subst G g; auto.
+    have : f g == g × ∏ b : L, f b = b -> g ≺ b. {
+      move : (tarski_lfp f Hf) => H.
+      induction H.
+      split; subst G g; auto.
     }
     move => [H1 H2].
-    apply antisym.
+    apply antisymL.
     - apply is_inf => b; auto.
     - apply is_lowb; auto.
   Qed.
 
   Lemma tarski_gfp (f : L -> L) (Hf : mono f):
-    is_gfp f (gfp Hf).
+    is_gfp f (gfp f Hf).
   Proof.
     remember (fun x => x ≺ f x) as G.
     remember (sup G) as g.
-    have HG : g \in G. {
+    have HG : g ∈ G. {
       subst.
       unfold In.
       apply is_sup => b Hb.
-      apply trans with (f b); auto.
+      apply transL with (f b); auto.
       apply Hf.
       apply is_upb; auto.
     }
     have Hg : g ≺ f g by subst.
     split.
-    - subst g G; apply antisym; auto.
+    - subst g G; apply antisymL; auto.
       apply is_upb.
       apply Hf; auto.
     - move => b Hb.
@@ -211,65 +192,87 @@ Section complatTheory.
       subst G.
       unfold In.
       rewrite  Hb.
-      apply refl.
+      apply reflL.
   Qed.
 
   Lemma tarski_gfp_gg (f : L -> L) (Hf : mono f) :
-    sup (fun x => x ≺ f x) = sup (fun x => x = f x).
+    sup (fun x => x ≺ f x) = sup (fun x => x == f x).
   Proof.
-    move : (tarski_gfp Hf) => [H1 H2].
+    move : (tarski_gfp f Hf) => [H1 H2].
     remember (fun x => x ≺ f x) as G.
     remember (sup G) as g.
-    apply antisym.
-    - subst G g.
+    apply antisymL.
+    - apply is_upb. simpl.
+      subst G g.
+      unfold gfp in *; auto.
+      apply pathsinv0; auto.
+    - apply is_sup => x H.
+      simpl in H.
+      subst g G.
       apply is_upb.
-      unfold In; auto.
-    - apply is_sup => x; auto.
+      unfold In.
+      rewrite <- H.
+      apply reflL.      
   Qed.
 
   Lemma sup_join (x y : L) :
-    sup (Couple _ x y) = join x y.
+    sup (couple x y)= join x y.
   Proof.
-    apply antisym.
+    apply antisymL.
     - move : (join_upb x y) => [Hx Hy].
       apply is_sup => z.
-      case; auto.
-    - apply join_sup; apply is_upb; constructor.
+      unfold In => H.
+      simpl in H.      
+      unfold ishinh_UU in H.
+      eapply H => Hz.
+      induction Hz as [Hz |Hz]; induction Hz; auto .
+    - apply join_sup; apply is_upb; simpl;
+      unfold ishinh_UU => P; apply; [left|right]; auto.
   Qed.
 
   Lemma counti_mono (f : L -> L) :
     continuous f -> mono f.
   Proof.
     unfold continuous, mono => H a b Hab.
-    pose AB := (Couple _ a b).
+    pose AB := (couple a b).
     have HAB : directed AB. {
       move => x y Hx Hy.
       move : (join_upb x y) => [H1 H2].
-      exists (join x y); repeat split; auto.
-
-      inversion Hx; inversion Hy; subst x y; unfold AB.
-      - rewrite joinI.
-        apply Couple_l.
-      - rewrite <- Hab.
-        rewrite joinC meetC meetK.
-        constructor.
-      - rewrite <- Hab, meetC, meetK; constructor.
-      - rewrite joinI; constructor.
+      move => P; apply; clear P.       
+      exists (join x y).
+      unfold AB, couple in Hx, Hy ; simpl in Hx, Hy.
+      apply Hx; clear Hx => Hx.
+      apply Hy; clear Hy => Hy.
+      repeat split; auto.
+      simpl => P; apply.
+      induction Hx as [Hx'|Hx'], Hy as [Hy'|Hy'];
+      induction Hx', Hy'.
+      - left. apply joinI.
+      - right. apply meet_join; auto.
+      - right. rewrite joinC. apply meet_join; auto.
+      - right; apply joinI.
     }
     move /H : HAB.
     simpl.
-    have : Im L L AB f = (Couple _ (f a) (f b)) . {
-      apply Extensionality_Ensembles; split => x.
-      - move => H0.
-        inversion H0; subst.
-        inversion H1; subst; constructor.
-      - case; econstructor; auto; constructor.
+    have : image_hsubtype  AB f = (couple (f a) (f b)). {
+      apply hsubtype_univalence => x; split => H0;
+      simpl in H0; apply H0; clear H0 => H0.
+      - induction H0 as [x0 H0].
+        induction H0 as [Hf H0].
+        apply H0; clear H0 => H0.
+        induction H0 as [H0|H0]; induction H0; induction Hf;
+        simpl => P; apply; clear P; [left|right]; auto.
+      - induction H0 as [H0|H0]; rewrite H0;
+        move => P; apply; clear P;
+        [exists a|exists b]; split; auto;
+        unfold AB, couple; simpl => P; apply; clear P;
+        [left|right]; auto.      
     }
     move => ->.
     repeat rewrite sup_join.
     have : join a b = b. {
       rewrite <- Hab.
-      rewrite meetC joinC meetK; auto.
+      rewrite meetC joinC joinmeetAbs; auto.
     }
     repeat move => ->.
     move : (join_upb (f a) (f b)); case; auto.
@@ -278,7 +281,6 @@ Section complatTheory.
   Lemma bot_min (X : L) : ⊥ ≺ X.
   Proof.
     apply is_lowb; constructor.
-
   Qed.
 
   Lemma top_max (X : L) : X ≺ ⊤.
@@ -288,7 +290,7 @@ Section complatTheory.
 
   (* kleene's fixpoint theorem *)
 
-  Lemma powS (f : L -> L) (Hf : mono f) n :
+  (* Lemma powS (f : L -> L) (Hf : mono f) n :
     pow f n ⊥ ≺ pow f (n + 1) ⊥.
   Proof.
     induction n.
@@ -355,6 +357,24 @@ Section complatTheory.
       - rewrite <- Hx.
         apply Hf; auto.
     }
-  Qed.
+  Qed. *)
 
 End complatTheory.  
+
+
+
+  
+  
+  
+
+  
+
+
+
+
+
+
+  
+
+
+
