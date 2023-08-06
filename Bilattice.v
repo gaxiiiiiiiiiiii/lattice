@@ -117,8 +117,8 @@ End interlacedProperties.
 
 (*  8 monotonic conditions, operators [kmeet,kjoin,tmeet,tjon] are monotone with respect to both of [tle,kle].*)
 
-(* 12 distributive laws connecting [<∧>, <∨>, <*>, <+>] *)
-Definition isDistributive {T} (L : bilattice T) :=
+(* 12 bidistr laws connecting [<∧>, <∨>, <*>, <+>] *)
+Definition isBidistr {T} (L : bilattice T) :=
   (∏ (x y z : L), x <∧> (y <∨> z) = (x <∧> y) <∨> (x <∧> z)) ×
   (∏ (x y z : L), x <∨> (y <∧> z) = (x <∨> y) <∧> (x <∨> z)) ×
   (∏ (x y z : L), x <*> (y <+> z) = (x <*> y) <+> (x <*> z)) ×
@@ -133,14 +133,14 @@ Definition isDistributive {T} (L : bilattice T) :=
   (∏ (x y z : L), x <+> (y <∨> z) = (x <+> y) <∨> (x <+> z)) ×
   (∏ (x y z : L), x <*> (y <∧> z) = (x <*> y) <∧> (x <*> z)) ×
   (∏ (x y z : L), x <*> (y <∨> z) = (x <*> y) <∨> (x <*> z)).
-Definition distributive T := ∑ L : bilattice T, isDistributive L.
-Coercion distributiveToBilattice {T} (L : distributive T) : bilattice T := pr1 L.
+Definition bidistr T := ∑ L : bilattice T, isBidistr L.
+Coercion bidistrToBilattice {T} (L : bidistr T) : bilattice T := pr1 L.
 
-(* access to distributive properties *)
-Section distributiveProperties.
+(* access to bidistr properties *)
+Section bidistrProperties.
   
   Variable X : hSet.
-  Variable L : distributive X.
+  Variable L : bidistr X.
   
   Definition tmeet_tjoin : 
     ∏ x y z, x <∧> (y <∨> z) = (x <∧> y) <∨> (x <∧> z) := pr1 (pr2 L).
@@ -167,7 +167,7 @@ Section distributiveProperties.
   Definition kmeet_tjoin :
     ∏ x y z, x <*> (y <∨> z) = (x <*> y) <∨> (x <*> z) := pr22 (pr222 (pr222 (pr222 (pr2 L)))).
 
-End distributiveProperties.
+End bidistrProperties.
 
 
 (* the lows of distribution [<∧>, <∨>, <*>, <+>] over [⊓, ⊔, Σ, Π]. *)
@@ -193,7 +193,7 @@ Definition isCompdistr {T} (L : compbilat T) :=
   (∏ (x : L)(Y : {set : L}), x <+> (Σ Y) = Σ (image_hsubtype Y (fun y => x <+> y))).
 
 
-Definition compditr T := ∑ L : compbilat T, isDistributive L × isCompdistr L.
+Definition compditr T := ∑ L : compbilat T, isBidistr L × isCompdistr L.
 Coercion compditrToCompbilat {T} (L : compditr T) : compbilat T := pr1 L.
 
 (* access to compdistr properties *)
