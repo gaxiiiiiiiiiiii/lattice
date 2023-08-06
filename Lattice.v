@@ -9,13 +9,13 @@ Unset Printing Implicit Defensive.
 (* Lattice *)
 (***********)
 
-Definition isLatticeOp {X : hSet} (min max : binop X) :=
-  (iscomm min × iscomm max) ×
-  (isassoc min × isassoc max) ×
-  (isabsorb min max × isabsorb max min).
+Definition isLatticeOp {X : hSet} (meet join : binop X) :=
+  (iscomm meet × iscomm join) ×
+  (isassoc meet × isassoc join) ×
+  (isabsorb meet join × isabsorb join meet).
 
-Lemma isaprop_isLatticeOp {X : hSet} (min max : binop X) :
-  isaprop (isLatticeOp min max).
+Lemma isaprop_isLatticeOp {X : hSet} (meet join : binop X) :
+  isaprop (isLatticeOp meet join).
 Proof.
   repeat apply isapropdirprod;
   try apply isapropiscomm;
@@ -25,10 +25,10 @@ Defined.
 
 
 Definition lattice (X : hSet) :=
-  ∑ min max : binop X, isLatticeOp min max.
+  ∑ meet join : binop X, isLatticeOp meet join.
 
-Definition make_lattice {X : hSet} {min max : binop X} :
-  isLatticeOp min max -> lattice X := fun H => min,, max,, H.
+Definition make_lattice {X : hSet} {meet join : binop X} :
+  isLatticeOp meet join -> lattice X := fun H => meet,, join,, H.
 
 Definition latticeToSet {X : hSet}(l : lattice X) := X.
 Coercion latticeToSet : lattice >-> hSet.
