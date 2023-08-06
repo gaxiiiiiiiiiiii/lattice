@@ -1,6 +1,5 @@
 Require Export Lattice.
 
-Locate "=".
 
 Notation "a == b" := (eqset a b) (at level 70, no associativity).
 Definition singleton {T : hSet} (x : T) : {set : T} := fun y => y == x.
@@ -35,7 +34,7 @@ Coercion complatToSetOp (T : hSet) : complat T -> hSet := fun L => latticeToSet 
 
 Definition sup {T : hSet} {L : complat T} (A : {set : L}) : L := pr1 (pr2 L) A.
 Definition inf {T : hSet} {L : complat T} (A : {set : L}) : L := pr1 (pr2 (pr2 L)) A.
-Check fullset.
+
 Definition bot {T : hSet} {L : complat T} : L := inf fullset.
 Definition top {T : hSet} {L : complat T} : L := sup fullset.
 Notation "⊥" := bot.
@@ -272,7 +271,7 @@ Section complatTheory.
     repeat rewrite sup_join.
     have : join a b = b. {
       rewrite <- Hab.
-      rewrite meetC joinC joinmeetAbs; auto.
+      rewrite meetC joinC joinmeetK; auto.
     }
     repeat move => ->.
     move : (join_upb (f a) (f b)); case; auto.

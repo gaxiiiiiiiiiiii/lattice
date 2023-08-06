@@ -51,14 +51,14 @@ Section transLheory.
   Definition joinC : iscomm join := pr2 (pr1 (pr2 (pr2 l))).
   Definition meetA : isassoc meet := pr1 (pr1 (pr2 (pr2 (pr2 l)))).
   Definition joinA : isassoc join := pr2 (pr1 (pr2 (pr2 (pr2 l)))).
-  Definition meetjoinAbs : isabsorb meet join := pr1 (pr2 (pr2 (pr2 (pr2 l)))).
-  Definition joinmeetAbs : isabsorb join meet := pr2 (pr2 (pr2 (pr2 (pr2 l)))).
+  Definition meetjoinK : isabsorb meet join := pr1 (pr2 (pr2 (pr2 (pr2 l)))).
+  Definition joinmeetK : isabsorb join meet := pr2 (pr2 (pr2 (pr2 (pr2 l)))).
 
   Lemma meetI (a : l) :
     a <*> a = a.
   Proof.    
-    move : (meetjoinAbs a (meet a a)) => H1.
-    move : (joinmeetAbs a a) => H2.
+    move : (meetjoinK a (meet a a)) => H1.
+    move : (joinmeetK a a) => H2.
     apply (transportf (fun x => a <*> x = a) H2 H1).
   Defined.
 
@@ -67,7 +67,7 @@ Section transLheory.
   Proof.
     eapply (pathscomp0 (b := a <+> (a <*> a))).
     - apply (transportb (fun x => a <+> a = a <+> x) (meetI a) (idpath _)).
-    - apply joinmeetAbs.
+    - apply joinmeetK.
   Defined.
 
   Lemma reflL (a : l) :
@@ -143,10 +143,10 @@ Section transLheory.
     a ≺ join a b ∧ b ≺ join a b.
   Proof.
     split; move.
-    - apply  meetjoinAbs.
+    - apply  meetjoinK.
     - intermediate_path (b <*> (b <+> a)).
       apply (transportf (fun x => b <*> x = b <*> (b <+> a)) (joinC b a)); auto.
-      apply meetjoinAbs.
+      apply meetjoinK.
   Defined.
 
   Lemma meet_join (a b : l) :
@@ -159,10 +159,10 @@ Section transLheory.
       apply joinC.
       intermediate_path (b <+> (b <*> a)).
       apply (transportf (fun x => b <+> (a <*> b) = b <+> x) (meetC a b)); auto.
-      apply joinmeetAbs.
+      apply joinmeetK.
     - intermediate_path (a <*> (a <+> b)).
       apply (transportb (fun x => a <*> b = a <*> x) H); auto.
-      apply meetjoinAbs.
+      apply meetjoinK.
   Defined.
 
   Lemma join_sup (a b c : l) :
