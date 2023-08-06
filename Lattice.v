@@ -1,381 +1,270 @@
+From UniMath Require Export MoreFoundations.All Algebra.Monoids.
 From mathcomp Require Export ssreflect.
-Require Export Ensembles Image.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-Notation "x \in X" := (In _ X x)(at level 30) .
-Notation "{set  T }" := (Ensemble T)(at level 10).
-Notation "f ∘ g" := (fun x => f (g x))(at level 40).
+(***********)
+(* Lattice *)
+(***********)
 
-Module lattice.
+Definition isLatticeOp {X : hSet} (min max : binop X) :=
+  (iscomm min × iscomm max) ×
+  (isassoc min × isassoc max) ×
+  (isabsorb min max × isabsorb max min).
 
-  Record ops T := Ops {
-    meet_ : T -> T -> T;
-    join_ : T -> T -> T;    
-  }.
+Lemma isaprop_isLatticeOp {X : hSet} (min max : binop X) :
+  isaprop (isLatticeOp min max).
+Proof.
+  repeat apply isapropdirprod;
+  try apply isapropiscomm;
+  try apply isapropisassoc;
+  try apply isapropisabsorb.
+Defined.  
 
-  Record mixin_of T (ops_ : ops T ):= Mixin {    
-    meet := meet_ ops_;
-    join := join_ ops_;
-    meetC : forall a b, meet a b = meet b a;
-    joinC : forall a b, join a b = join b a;
-    meetA : forall a b c, meet a (meet b c) = meet (meet a b) c;
-    joinA : forall a b c , join a (join b c) = join (join a b) c;
-    joinK : forall a b, meet a (join a b) = a;
-    meetK : forall a b, join a (meet a b) = a;
-  }.
-  Notation class_of := mixin_of (only parsing).
 
-  Section ClassDef.
+Definition lattice (X : hSet) :=
+  ∑ min max : binop X, isLatticeOp min max.
 
-    Structure type := Pack {
-      sort : Type; 
-      ops_ : ops sort;  
-      _ : class_of ops_
-    }.
+Definition make_lattice {X : hSet} {min max : binop X} :
+  isLatticeOp min max -> lattice X := fun H => min,, max,, H.
 
-    Variables (cT : type).    
-    Definition class := let: Pack _ _ c := cT return class_of (ops_ cT) in c.
-    Definition opsOf := let: Pack _ p _ := cT return ops (sort cT) in p.
+Definition latticeToSet {X : hSet}(l : lattice X) := X.
+Coercion latticeToSet : lattice >-> hSet.
 
+Definition meet {X : hSet} {l : lattice X} (x y : l) : l := pr1 l x y.
+Definition join {X : hSet} {l : lattice X} (x y : l) : l := pr1 (pr2 l) x y.
+Definition le {X : hSet} {l : lattice X} : hrel l := fun x y => (meet x y = x)%logic.
+
+Infix "<*>" := meet(at level 30).
+Infix "<+>" := join (at level 30).
+Infix "≺" := le (at level 40).
+
+
+Section transLheory.
   
-  End ClassDef.
-
-  Module Exports.
-    Coercion sort : type >-> Sortclass.
-    Notation lattice := type.
-    Notation latticeMixin := Mixin.
-    
-    Definition meet T := meet (class T).
-    Definition join T := join (class T).
-    Definition le (T : lattice) (x y : T) := meet x y = x.
-
-    Lemma meetC (T : lattice) : forall (a b : T), meet a b = meet b a.
-    Proof. apply meetC. Qed.
-    Lemma joinC (T : lattice) : forall (a b : T), join a b = join b a.
-    Proof. apply joinC. Qed.
-    Lemma meetA (T : lattice) : forall (a b c : T), meet a (meet b c) = meet (meet a b) c.
-    Proof. apply meetA. Qed.
-    Lemma joinA (T : lattice) : forall (a b c : T), join a (join b c) = join (join a b) c.
-    Proof. apply joinA. Qed.
-    Lemma joinK (T : lattice) : forall (a b : T), meet a (join a b) = a.
-    Proof. apply joinK. Qed.
-    Lemma meetK (T : lattice) : forall (a b : T), join a (meet a b) = a.
-    Proof. apply meetK. Qed.
-
-
-    Notation "x ∧ y" := (meet x y)(at level 30).
-    Notation "x ∨ y" := (join x y)(at level 30).   
-    Notation "x ≺ y" := (le x y)(at level 40). 
-   
-  End Exports.
-
-End lattice.
-
-Export lattice.Exports.
-
-
-Module distlat.
-
-  Section ClassDef.
-
-    Record mixin_of T (ops_ : lattice.ops T) := Mixin {
-      meet_ := lattice.meet_ ops_;
-      join_ := lattice.join_ ops_;      
-      dist_meet_join : forall a b c, meet_ a (join_ b c) = join_ (meet_ a b) (meet_ a c);
-      dist_join_meet : forall a b c, join_ a (meet_ b c) = meet_ (join_ a b) (join_ a c);
-    }.
-
-    Record class_of T (ops_ : lattice.ops T) := Class {
-      base : lattice.class_of ops_;
-      mixin : mixin_of ops_;
-    }.
-
-    Structure type := Pack {
-      sort : Type;
-      ops_ : lattice.ops sort;
-      _ : class_of ops_;
-    }.
-
-    Variable (cT : type).
-
-    Definition class := let: Pack _ _ c := cT  return class_of (ops_ cT) in c.
-    Definition lattice := @lattice.Pack (sort cT) (ops_ cT) (base class).
-
-  End ClassDef.
-
-  Module Exports.
-
-    Coercion base : class_of >-> lattice.class_of.
-    Coercion mixin : class_of >-> mixin_of.
-    Coercion sort : type >-> Sortclass.
-    Coercion lattice : type >-> lattice.type.
-    Canonical lattice.
-    Notation distlat := type.
-    Notation distlatMixin := mixin_of.    
-
-    Definition dist_meet_join (T : distlat): forall (a b c : T), 
-      a ∧ (b ∨ c) = (a ∧ b) ∨ (a ∧ c).
-    Proof.  apply (dist_meet_join  (class T)). Qed.
-
-    
-    Lemma dist_join_meet (T : distlat) : forall (a b c : T),
-      a ∨ (b ∧ c) = (a ∨ b) ∧ (a ∨ c).
-    Proof. apply (dist_join_meet (class T)). Qed.    
+  Variable X : hSet.
+  Variable l : lattice X.
   
-  End Exports.
+  Definition meetC : iscomm meet := pr1 (pr1 (pr2 (pr2 l))).
+  Definition joinC : iscomm join := pr2 (pr1 (pr2 (pr2 l))).
+  Definition meetA : isassoc meet := pr1 (pr1 (pr2 (pr2 (pr2 l)))).
+  Definition joinA : isassoc join := pr2 (pr1 (pr2 (pr2 (pr2 l)))).
+  Definition meetjoinAbs : isabsorb meet join := pr1 (pr2 (pr2 (pr2 (pr2 l)))).
+  Definition joinmeetAbs : isabsorb join meet := pr2 (pr2 (pr2 (pr2 (pr2 l)))).
 
-End distlat.
+  Lemma meetI (a : l) :
+    a <*> a = a.
+  Proof.    
+    move : (meetjoinAbs a (meet a a)) => H1.
+    move : (joinmeetAbs a a) => H2.
+    apply (transportf (fun x => a <*> x = a) H2 H1).
+  Defined.
 
-Export distlat.Exports.
+  Lemma joinI (a : l) :
+    a <+> a = a.
+  Proof.
+    eapply (pathscomp0 (b := a <+> (a <*> a))).
+    - apply (transportb (fun x => a <+> a = a <+> x) (meetI a) (idpath _)).
+    - apply joinmeetAbs.
+  Defined.
 
-
-Module tblattice.
-
-  Section ClassDef.
-
-    Record mixin_of T (ops_ : lattice.ops T) := Mixin {
-      top : T;
-      bot : T;
-      le_ := fun a b =>  lattice.meet_ ops_ a b = a;
-      topP : forall a, le_ a top;
-      botP : forall a, le_ bot a;
-    }.
-
-    Record class_of T (ops_ : lattice.ops T) := Class {
-      base : lattice.class_of ops_;
-      mixin : mixin_of ops_;
-    }.
-
-    Structure type := Pack {
-      sort : Type;
-      ops_ : lattice.ops sort;
-      _ : class_of ops_;
-    }.
-
-    Variable (cT : type).
-
-    Definition class := let: Pack _ _ c := cT  return class_of (ops_ cT) in c.
-    Definition lattice := @lattice.Pack (sort cT) (ops_ cT) (base class).
-
-  End ClassDef.
-
-  Module Exports.
-
-    Coercion base : class_of >-> lattice.class_of.
-    Coercion mixin : class_of >-> mixin_of.
-    Coercion sort : type >-> Sortclass.
-    Coercion lattice : type >-> lattice.type.
-    Canonical lattice.
-    Notation tblattice := type.
-    Notation tblatticeMixin := mixin_of.    
-   
-    Definition TOP {T} := top (class T).
-    Definition BOT {T} := bot (class T).
-    Notation "⊤" := TOP.
-    Notation "⊥" := BOT.  
-
-    Lemma topP (T : tblattice) (x : T) : x ≺ ⊤.
-    Proof. apply topP. Qed.
-    Lemma botP (T : tblattice) (x : T) : ⊥ ≺ x.
-    Proof. apply botP. Qed.
-  
-  End Exports.
-
-End tblattice.
-
-Export tblattice.Exports.
-
-
-
-Section latticeTheory.
-
- Definition mono {L1 L2 : lattice}(f : L1 -> L2) :=
-    forall a b, a ≺ b -> f a ≺ f b.
-
-  Definition antimono {L1 L2 : lattice}(f : L1 -> L2) :=
-    forall a b, a ≺ b -> f b ≺ f a.  
-
-  Definition directed  {L : lattice}(X : {set L}) :=
-    forall x y, x \in X  -> y \in X -> exists z, z \in X /\ x ≺ z /\ y ≺ z.
-  
-  Variable L : lattice.
-
-  Lemma refl (a : L) :
+  Lemma reflL (a : l) :
     a ≺ a.
   Proof.
-    move : (joinK a (meet a a)).
-    rewrite meetK; auto.
-  Qed.
-  
+    simpl.
+    apply meetI.
+  Defined.
 
-  Lemma trans (a b c : L) :
+  Lemma transL (a b c : l) :
     a ≺ b -> b ≺ c -> a ≺ c.
   Proof.
-    move => ab bc.
-    have H : (meet a (meet b c) = a). {
+    move => /= ab bc.
+    eapply (pathscomp0 (b := (a <*> b) <*> c)). 
+    apply (transportb (fun x => a <*> c = x <*> c) ab); auto.
+    eapply (pathscomp0 (b := a <*> (b <*> c))).
+    apply meetA.
+    apply (transportb (fun x => a <*> x = a)  bc); auto.
+  Defined.   
 
-      rewrite bc; auto.
-    }
-    rewrite meetA in H.
-    rewrite ab in H; auto.
-  Qed.
-
-  Lemma antisym (a b : L) :
+  Lemma antisymL (a b : l) :
     a ≺ b -> b ≺ a -> a = b.
   Proof.
-    move => ab ba.
-    rewrite <- ba.
-    rewrite meetC; auto.
-  Qed.
+    move => /= ab ba.
+    intermediate_path (a <*> b).
+    apply pathsinv0; auto.
+    intermediate_path (b <*> (b <*> a)).
+    intermediate_path ((b <*> b) <*> a).
+    intermediate_path (a <*> (b <*> b)).
+    apply (transportb (fun x => a <*> b = a <*> x) (meetI b)); auto.
+    apply meetC.
+    apply (meetA b b a).
+    apply (transportb (fun x => b <*> x = b) ba).
+    apply meetI.
+  Defined.
 
-    Lemma meetI (a : L) :
-    meet a a = a.
+    
+  Lemma meet_lowb (a b : l) :
+    meet a b ≺ a ∧ meet a b ≺ b.
   Proof.
-    move : (joinK a (meet a a)).
-    rewrite meetK; auto.
-  Qed.
-
-  Lemma joinI (a : L) :
-    join a a = a.
+    split => /=.
+    - intermediate_path (a <*> (a <*> b)).
+      apply meetC.
+      intermediate_path ((a <*> a) <*> b).
+      apply (pathsinv0 (meetA a a b)).
+      apply (transportb (fun x => x <*> b = a <*> b) (meetI a)).
+      auto.
+    - intermediate_path (a <*> (b <*> b)).
+      apply (meetA a b b ).
+      apply (transportb (fun x => a <*> x = a <*> b) (meetI b)); auto.
+  Defined.
+  
+  Lemma meet_inf (a b c : l) :
+    c ≺ a -> c ≺ b -> c ≺ meet a b.
   Proof.
-    move : (meetK a (join a a)).
-    rewrite joinK; auto.
-  Qed.
+    move => /= Ha Hb.
+    intermediate_path ((c <*> a) <*> b).
+    apply pathsinv0. apply meetA.
+    apply (transportb (fun x => x <*> b = c) Ha).
+    auto.
+  Defined.
 
-  Lemma meet_lowb (a b : L) :
-    meet a b ≺ a /\ meet a b ≺ b.
-  Proof.
-    split; move.
-    - rewrite (meetC (meet a b) a).
-      rewrite meetA.
-      move : (refl a).
-      move => -> //=.
-    - rewrite <- meetA.
-      move : (refl b).
-      move => -> //=.
-  Qed.
-
-  Lemma meet_lowb_l (a b : L) :
-    meet a b ≺ a.
-  Proof.
-    move : (meet_lowb a b) => [H _]; auto.
-  Qed.
-
-  Lemma meet_lowb_r (a b : L) :
-    meet a b ≺ b.
-  Proof.
-    move : (meet_lowb a b) => [_ H]; auto.
-  Qed.
-
-  Lemma meet_inf (a b : L) :
-    forall c, c ≺ a -> c ≺ b -> c ≺ meet a b.
-  Proof.
-    move => c Ha  Hb.
-    unfold le.
-    rewrite meetA Ha Hb; auto.
-  Qed.
-
-  Lemma inf_uni (a b c : L) :
+  Lemma inf_uni (a b c : l) :
     c ≺ a -> c ≺ b -> (forall d, d ≺ a -> d ≺ b -> d ≺ c) -> meet a b = c.
   Proof.
     move => Ha Hb H.
     move : (meet_lowb a b) => [Ha' Hb'].
     move : (meet_inf Ha Hb) => H'.
-    apply antisym; auto.
-  Qed.
+    apply antisymL; auto.
+  Defined.
 
-  Lemma join_upb (a b : L) :
-    a ≺ join a b /\ b ≺ join a b.
+  Lemma join_upb (a b : l) :
+    a ≺ join a b ∧ b ≺ join a b.
   Proof.
     split; move.
-    - apply  (joinK a b).
-    - rewrite (joinC a b).
-      apply (joinK b a).
-  Qed.
+    - apply  meetjoinAbs.
+    - intermediate_path (b <*> (b <+> a)).
+      apply (transportf (fun x => b <*> x = b <*> (b <+> a)) (joinC b a)); auto.
+      apply meetjoinAbs.
+  Defined.
 
-  Lemma join_upb_l (a b : L) :
-    a ≺ join a b.
+  Lemma meet_join (a b : l) :
+    meet a b = a <-> join a b = b.
   Proof.
-    move : (join_upb a b) => [H _]; auto.
-  Qed.
+    split => H.
+    - intermediate_path ((a <*> b) <+> b).
+      apply (transportb (fun x => a <+> b = x <+> b) H); auto.      
+      intermediate_path (b <+> (a <*> b)).
+      apply joinC.
+      intermediate_path (b <+> (b <*> a)).
+      apply (transportf (fun x => b <+> (a <*> b) = b <+> x) (meetC a b)); auto.
+      apply joinmeetAbs.
+    - intermediate_path (a <*> (a <+> b)).
+      apply (transportb (fun x => a <*> b = a <*> x) H); auto.
+      apply meetjoinAbs.
+  Defined.
 
-  Lemma join_upb_r (a b : L) :
-    b ≺ join a b.
+  Lemma join_sup (a b c : l) :
+    a ≺ c -> b ≺ c -> join a b ≺ c.
   Proof.
-    move : (join_upb a b) => [_ H]; auto.
-  Qed.
+    move =>  Ha Hb.
+    apply meet_join in Ha.
+    apply meet_join in Hb.
+    apply meet_join.
+    intermediate_path (a <+> b <+> (b <+> c)).
+    apply (transportb (fun x => (a <+> b) <+> c = (a <+> b) <+> x) Hb); auto.
+    intermediate_path  (a <+> (b <+> (b <+> c))).
+    apply joinA.
+    intermediate_path (a <+> ((b <+> b) <+> c)).
+    apply (transportf (fun x => a <+> x =  a <+> ((b <+> b) <+> c)) (joinA b b c)); auto.
+    intermediate_path (a <+> (b <+> c)).
+    apply (transportb (fun x => a <+> (x <+> c) = a <+> (b <+> c)) (joinI b)); auto.
+    apply (transportb (fun x => a <+> x =  c) Hb); auto.
+  Defined.
 
 
-  Lemma join_sup (a b : L) :
-    forall c, a ≺ c -> b ≺ c -> join a b ≺ c.
-  Proof.
-    move => c Ha  Hb.
-    move : (meetK c a).
-    rewrite (meetC c a).
-    rewrite Ha => Ha'.
-    move : (meetK c b).
-    rewrite (meetC c b).
-    rewrite Hb => Hb'.
-    have : join (join c a) (join c b) = c. {
-      rewrite Ha' Hb' joinI; auto.
-    }
-    rewrite joinA.
-    rewrite <- (joinA c a c).
-    rewrite (joinC a c).
-    rewrite joinA joinI.
-    rewrite <- joinA.
-    rewrite (joinC c _).
-    move => <-.
-    apply joinK.
-  Qed.
-
-  Lemma sup_uni (a b c : L) :
+  Lemma sup_uni (a b c : l) :
     a ≺ c -> b ≺ c -> (forall d, a ≺ d -> b ≺ d -> c ≺ d) -> join a b = c.
   Proof.
     move => Ha Hb H.
     move : (join_upb a b) => [Ha' Hb'].
     move : (join_sup Ha Hb) => H'.
-    apply antisym; auto.
+    apply antisymL; auto.
   Qed.
 
-  Lemma join_meet (a b : L) :
-    a ≺ b <-> join a b = b.
-  Proof.
-    split.
-    - move => <-.
-      rewrite joinC.
-      rewrite meetC.
-      rewrite meetK; auto.
-    - move => <- .
-      move : (join_upb a b); case; auto.
-  Qed.
+End transLheory.
+
+(*********************)
+(* Monotony and etc. *)
+(*********************)
+
+Notation "{set : X }" := (hsubtype X).
+Definition In {T : hSet} (A : {set : T}) (a : T) := A a. 
+Notation "a ∈ A" := (In A a) (at level 70).
+
+Definition fullset {T : hSet} : {set : T} := fun _ => htrue.
+Notation "∅" := (emptysubtype _).
 
 
-  (* about operator *)
 
-  Lemma antimono_compose_mono {L1 L2 L3 : lattice}(f : L1 -> L2)(g : L2 -> L3) :
+(* fullsetの検証 *)
+(* Goal ∏ (T : hSet) (t : T), t ∈ fullset.
+Proof.
+  move => T t.
+  unfold In => /=.
+  apply tt.
+Qed.   *)
+
+Definition mono {T : hSet}{L1 L2 : lattice T}(f : L1 -> L2) :=
+  ∏ (a b : L1), a ≺ b → f a ≺ f b.
+
+
+Definition antimono {T : hSet }{L1 L2 : lattice T}(f : L1 -> L2) :=
+  ∏ a b : L1, a ≺ b -> f b ≺ f a.  
+
+Definition directed {T : hSet} {L : lattice T}(X : {set : L}) :=
+  ∏ x y, x ∈ X -> y ∈ X -> ∃ z, z ∈ X ∧ x ≺ z ∧ y ≺ z.
+
+
+Lemma isapropMono {T : hSet}{L1 L2 : lattice T}(f : L1 -> L2) :
+  isaprop (mono f).
+Proof.
+  repeat (apply impred; intro).
+  apply propproperty.
+Defined.
+
+Lemma isapropAntimono {T : hSet}{L1 L2 : lattice T}(f : L1 -> L2) :
+  isaprop (antimono f).
+Proof.
+  repeat (apply impred; intro).
+  apply propproperty.
+Defined.
+
+Lemma isapropDirected {T : hSet}{L : lattice T}(X : {set : L}) :
+  isaprop (directed X).
+Proof.
+  repeat (apply impred; intro).
+  apply propproperty.
+Defined.
+
+Lemma antimono_compose_mono {T : hSet}{L1 L2 L3 : lattice T}(f : L1 -> L2)(g : L2 -> L3) :
     antimono f -> antimono g -> mono (g ∘ f).
-  Proof. 
-    move => Hf Hg x y H; eauto.
-  Qed.
+Proof. 
+  move => Hf Hg x y H; eauto.
+Qed.
 
-  Lemma mono_antimono_constant (f : L -> L) :
-    mono f -> antimono f -> forall x y, f x = f y.
-  Proof.
-    move => Hm Ha x y.
-    apply antisym.
-    - move : (meet_lowb x y) => [low_x low_y].
-      apply trans with (f (meet x y)).      
-      - apply Ha; auto.
-      - apply Hm; auto.      
-    - move : (join_upb x y) => [up_x up_y].
-      apply trans with (f (join x y)).
-      - apply Hm; auto.
-      - apply Ha; auto.
-  Qed.
-
-
-End latticeTheory.
+Lemma mono_antimono_constant {T : hSet} (L : lattice T)(f : L -> L) :
+  mono f -> antimono f -> ∏ x y, f x = f y.
+Proof.
+  move => Hm Ha x y.
+  apply antisymL.
+  - move : (meet_lowb x y) => [low_x low_y].
+    apply transL with (f (meet x y)).      
+    - apply Ha; auto.
+    - apply Hm; auto.      
+  - move : (join_upb x y) => [up_x up_y].
+    apply transL with (f (join x y)).
+    - apply Hm; auto.
+    - apply Ha; auto.
+Qed.
