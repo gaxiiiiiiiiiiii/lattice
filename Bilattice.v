@@ -37,7 +37,7 @@ Notation Π  := kinf.
 Notation Σ := ksup.
 
 
-Section bilatPropertyies.
+Section bilatProperties.
   
   Variable X : hSet.
   Variable L : bilattice X.
@@ -56,10 +56,10 @@ Section bilatPropertyies.
   Definition kmeetkjoinK : isabsorb kmeet kjoin := pr122 (pr222 L).
   Definition kjoinkmeetK : isabsorb kjoin kmeet := pr222 (pr222 L).
 
-End bilatPropertyies.
+End bilatProperties.
 
 (* access to complat properties from compbilat *)
-Section compbilatPropertyies.
+Section compbilatProperties.
   
   Variable X : hSet.
   Variable L : compbilat X.
@@ -81,7 +81,7 @@ Section compbilatPropertyies.
   Definition kis_inf :
     ∏ A a, (∏ b, b ∈ A -> a ≺k b) -> a ≺k kinf A := @is_inf _ (pr2 L).
   
-End compbilatPropertyies.
+End compbilatProperties.
 
 
 
@@ -91,12 +91,31 @@ Definition isInterlaced {T} (L : bilattice T) :=
   (∏ (x y : L), x ≺t y -> (x <∨> y) ≺t (x <∨> y)) ×
   (∏ (x y : L), x ≺t y -> (x <*> y) ≺t (x <*> y)) ×
   (∏ (x y : L), x ≺t y -> (x <+> y) ≺t (x <+> y)) ×
-  (∏ (x y : L), x ≺k y -> (x <*> y) ≺k (x <*> y)) ×
-  (∏ (x y : L), x ≺k y -> (x <+> y) ≺k (x <+> y)) ×
   (∏ (x y : L), x ≺k y -> (x <∧> y) ≺k (x <∧> y)) ×
-  (∏ (x y : L), x ≺k y -> (x <∨> y) ≺k (x <∨> y)).
+  (∏ (x y : L), x ≺k y -> (x <∨> y) ≺k (x <∨> y)) ×
+  (∏ (x y : L), x ≺k y -> (x <*> y) ≺k (x <*> y)) ×
+  (∏ (x y : L), x ≺k y -> (x <+> y) ≺k (x <+> y)).
 Definition interlaced T := ∑ L : bilattice T, isInterlaced L.
 Coercion interlacedToBilattice {T} (L : interlaced T) : bilattice T := pr1 L.
+
+(* access to interlaced properties *)
+Section interlacedProperties.
+  
+  Variable X : hSet.
+  Variable L : interlaced X.
+  
+  Definition tmeetMonotonet : ∏ x y, x ≺t y -> (x <∧> y) ≺t (x <∧> y) := pr1 (pr2 L).
+  Definition tjoinMonotonet : ∏ x y, x ≺t y -> (x <∨> y) ≺t (x <∨> y) := pr12 (pr2 L).
+  Definition kmeetMonotonet : ∏ x y, x ≺t y -> (x <*> y) ≺t (x <*> y) := pr122 (pr2 L).
+  Definition kjoinMonotonet : ∏ x y, x ≺t y -> (x <+> y) ≺t (x <+> y) := pr1 (pr222 (pr2 L)).
+  Definition tmeetMonotonek : ∏ x y, x ≺k y -> (x <∧> y) ≺k (x <∧> y) := pr12 (pr222 (pr2 L)).
+  Definition tjoinMonotonek : ∏ x y, x ≺k y -> (x <∨> y) ≺k (x <∨> y) := pr122 (pr222 (pr2 L)).
+  Definition kmeetMonotonek : ∏ x y, x ≺k y -> (x <*> y) ≺k (x <*> y) := pr1 (pr222 (pr222 (pr2 L))).
+  Definition kjoinMonotonek : ∏ x y, x ≺k y -> (x <+> y) ≺k (x <+> y) := pr2 (pr222 (pr222 (pr2 L))).
+    
+End interlacedProperties.
+
+(*  8 monotonic conditions, operators [kmeet,kjoin,tmeet,tjon] are monotone with respect to both of [tle,kle].*)
 
 (* 12 distributive laws connecting [<∧>, <∨>, <*>, <+>] *)
 Definition isDistributive {T} (L : bilattice T) :=
@@ -117,28 +136,128 @@ Definition isDistributive {T} (L : bilattice T) :=
 Definition distributive T := ∑ L : bilattice T, isDistributive L.
 Coercion distributiveToBilattice {T} (L : distributive T) : bilattice T := pr1 L.
 
+(* access to distributive properties *)
+Section distributiveProperties.
+  
+  Variable X : hSet.
+  Variable L : distributive X.
+  
+  Definition tmeet_tjoin : 
+    ∏ x y z, x <∧> (y <∨> z) = (x <∧> y) <∨> (x <∧> z) := pr1 (pr2 L).
+  Definition tjoin_tmeet : 
+    ∏ x y z, x <∨> (y <∧> z) = (x <∨> y) <∧> (x <∨> z) := pr12 (pr2 L).
+  Definition kmeet_kjoin : 
+    ∏ x y z, x <*> (y <+> z) = (x <*> y) <+> (x <*> z) := pr122 (pr2 L).
+  Definition kjoin_kmeet : 
+    ∏ x y z, x <+> (y <*> z) = (x <+> y) <*> (x <+> z) := pr1 (pr222 (pr2 L)).
+  Definition tmeet_kmeet : 
+    ∏ x y z, x <∧> (y <*> z) = (x <∧> y) <*> (x <∧> z) := pr12 (pr222 (pr2 L)).
+  Definition tmeet_kjoin : 
+    ∏ x y z, x <∧> (y <+> z) = (x <∧> y) <+> (x <∧> z) := pr122 (pr222 (pr2 L)).
+  Definition tjoin_kmeet : 
+    ∏ x y z, x <∨> (y <*> z) = (x <∨> y) <*> (x <∨> z) := pr1 (pr222 (pr222 (pr2 L))).
+  Definition tjoin_kjoin : 
+    ∏ x y z, x <∨> (y <+> z) = (x <∨> y) <+> (x <∨> z) := pr12 (pr222 (pr222 (pr2 L))).
+  Definition kjoin_tmeet :
+    ∏ x y z, x <+> (y <∧> z) = (x <+> y) <∧> (x <+> z) := pr122 (pr222 (pr222 (pr2 L))).
+  Definition kjoin_tjoin :
+    ∏ x y z, x <+> (y <∨> z) = (x <+> y) <∨> (x <+> z) := pr1 (pr222 (pr222 (pr222 (pr2 L)))).
+  Definition kmeet_tmeet :
+    ∏ x y z, x <*> (y <∧> z) = (x <*> y) <∧> (x <*> z) := pr12 (pr222 (pr222 (pr222 (pr2 L)))).
+  Definition kmeet_tjoin :
+    ∏ x y z, x <*> (y <∨> z) = (x <*> y) <∨> (x <*> z) := pr22 (pr222 (pr222 (pr222 (pr2 L)))).
+
+End distributiveProperties.
 
 
 (* the lows of distribution [<∧>, <∨>, <*>, <+>] over [⊓, ⊔, Σ, Π]. *)
 Definition isCompdistr {T} (L : compbilat T) :=
-  (∏ (x : L)(Y : {set : L}), x <∧> (⊓ Y) = ⊓(image_hsubtype Y (fun y => x <∧> y))) ×
-  (∏ (x : L)(Y : {set : L}), x <∨> (⊔ Y) = ⊔(image_hsubtype Y (fun y => x <∨> y))) ×
-  (∏ (x : L)(Y : {set : L}), x <*> (Σ Y) = Σ(image_hsubtype Y (fun y => x <*> y))) ×
-  (∏ (x : L)(Y : {set : L}), x <+> (Π Y) = Π(image_hsubtype Y (fun y => x <+> y))) ×
-  
-  (∏ (x : L)(Y : {set : L}), x <∧> (Σ Y) = Σ(image_hsubtype Y (fun y => x <∧> y))) ×
-  (∏ (x : L)(Y : {set : L}), x <∧> (Π Y) = Π(image_hsubtype Y (fun y => x <∧> y))) ×
-  (∏ (x : L)(Y : {set : L}), x <∨> (Σ Y) = Σ(image_hsubtype Y (fun y => x <∨> y))) ×
-  (∏ (x : L)(Y : {set : L}), x <∨> (Π Y) = Π(image_hsubtype Y (fun y => x <∨> y))) ×
+  (∏ (x : L)(Y : {set : L}), x <∧> (⊓ Y) = ⊓ (image_hsubtype Y (fun y => x <∧> y))) ×
+  (∏ (x : L)(Y : {set : L}), x <∧> (⊔ Y) = ⊔ (image_hsubtype Y (fun y => x <∧> y))) ×
+  (∏ (x : L)(Y : {set : L}), x <∧> (Π Y) = Π (image_hsubtype Y (fun y => x <∧> y))) ×
+  (∏ (x : L)(Y : {set : L}), x <∧> (Σ Y) = Σ (image_hsubtype Y (fun y => x <∧> y))) ×
 
-  (∏ (x : L)(Y : {set : L}), x <+> (Σ Y) = Σ(image_hsubtype Y (fun y => x <+> y))) ×
-  (∏ (x : L)(Y : {set : L}), x <+> (Π Y) = Π(image_hsubtype Y (fun y => x <+> y))) ×
-  (∏ (x : L)(Y : {set : L}), x <*> (Σ Y) = Σ(image_hsubtype Y (fun y => x <*> y))) ×
-  (∏ (x : L)(Y : {set : L}), x <*> (Π Y) = Π(image_hsubtype Y (fun y => x <*> y))).
+  (∏ (x : L)(Y : {set : L}), x <∨> (⊓ Y) = ⊓ (image_hsubtype Y (fun y => x <∨> y))) ×
+  (∏ (x : L)(Y : {set : L}), x <∨> (⊔ Y) = ⊔ (image_hsubtype Y (fun y => x <∨> y))) ×
+  (∏ (x : L)(Y : {set : L}), x <∨> (Π Y) = Π (image_hsubtype Y (fun y => x <∨> y))) ×
+  (∏ (x : L)(Y : {set : L}), x <∨> (Σ Y) = Σ (image_hsubtype Y (fun y => x <∨> y))) ×
+
+  (∏ (x : L)(Y : {set : L}), x <*> (⊓ Y) = ⊓ (image_hsubtype Y (fun y => x <*> y))) ×
+  (∏ (x : L)(Y : {set : L}), x <*> (⊔ Y) = ⊔ (image_hsubtype Y (fun y => x <*> y))) ×
+  (∏ (x : L)(Y : {set : L}), x <*> (Π Y) = Π (image_hsubtype Y (fun y => x <*> y))) ×
+  (∏ (x : L)(Y : {set : L}), x <*> (Σ Y) = Σ (image_hsubtype Y (fun y => x <*> y))) ×
+
+  (∏ (x : L)(Y : {set : L}), x <+> (⊓ Y) = ⊓ (image_hsubtype Y (fun y => x <+> y))) ×
+  (∏ (x : L)(Y : {set : L}), x <+> (⊔ Y) = ⊔ (image_hsubtype Y (fun y => x <+> y))) ×
+  (∏ (x : L)(Y : {set : L}), x <+> (Π Y) = Π (image_hsubtype Y (fun y => x <+> y))) ×
+  (∏ (x : L)(Y : {set : L}), x <+> (Σ Y) = Σ (image_hsubtype Y (fun y => x <+> y))).
+
+
 Definition compditr T := ∑ L : compbilat T, isDistributive L × isCompdistr L.
 Coercion compditrToCompbilat {T} (L : compditr T) : compbilat T := pr1 L.
 
+(* access to compdistr properties *)
 
+Section compdistrProperties.
+
+  Variable T : hSet.
+  Variable L : compditr T.
+  
+
+  Definition tmeet_tinf :
+    (∏ (x : L)(Y : {set : L}), x <∧> (⊓ Y) = ⊓(image_hsubtype Y (fun y => x <∧> y))) :=
+    pr1 (pr22 L).
+  Definition tmmet_tsup :
+    (∏ (x : L)(Y : {set : L}), x <∧> (⊔ Y) = ⊔(image_hsubtype Y (fun y => x <∧> y))) :=
+    pr12 (pr22 L).
+  Definition tmeet_kinf :
+    (∏ (x : L)(Y : {set : L}), x <∧> (Π Y) = Π (image_hsubtype Y (fun y => x <∧> y))) :=
+    pr122 (pr22 L).
+  Definition tmeet_ksup :
+    (∏ (x : L)(Y : {set : L}), x <∧> (Σ Y) = Σ (image_hsubtype Y (fun y => x <∧> y))) :=
+    pr1 (pr222 (pr22 L)).
+  
+  Definition tjoin_tinf :
+    (∏ (x : L)(Y : {set : L}), x <∨> (⊓ Y) = ⊓(image_hsubtype Y (fun y => x <∨> y))) :=
+    pr12 (pr222 (pr22 L)).
+  Definition tjoin_tsup :
+    (∏ (x : L)(Y : {set : L}), x <∨> (⊔ Y) = ⊔(image_hsubtype Y (fun y => x <∨> y))) :=
+    pr122 (pr222 (pr22 L)).
+  Definition tjoin_kinf :
+    (∏ (x : L)(Y : {set : L}), x <∨> (Π Y) = Π (image_hsubtype Y (fun y => x <∨> y))) :=
+    pr1 (pr222 (pr222 (pr22 L))).
+  Definition tjoin_ksup :
+    (∏ (x : L)(Y : {set : L}), x <∨> (Σ Y) = Σ (image_hsubtype Y (fun y => x <∨> y))) :=
+    pr12 (pr222 (pr222 (pr22 L))).
+  
+  Definition kmeet_tinf :
+    (∏ (x : L)(Y : {set : L}), x <*> (⊓ Y) = ⊓(image_hsubtype Y (fun y => x <*> y))) :=
+    pr122 (pr222 (pr222 (pr22 L))).
+  Definition kmeet_tsup :
+    (∏ (x : L)(Y : {set : L}), x <*> (⊔ Y) = ⊔(image_hsubtype Y (fun y => x <*> y))) :=
+    pr1 (pr222 (pr222 (pr222 (pr22 L)))).
+  Definition kmeet_kinf :
+    (∏ (x : L)(Y : {set : L}), x <*> (Π Y) = Π (image_hsubtype Y (fun y => x <*> y))) :=
+    pr12 (pr222 (pr222 (pr222 (pr22 L)))).
+  Definition kmeet_ksup :
+    (∏ (x : L)(Y : {set : L}), x <*> (Σ Y) = Σ (image_hsubtype Y (fun y => x <*> y))) :=
+    pr122 (pr222 (pr222 (pr222 (pr22 L)))).
+  
+  Definition kjoin_tinf :
+    (∏ (x : L)(Y : {set : L}), x <+> (⊓ Y) = ⊓(image_hsubtype Y (fun y => x <+> y))) :=
+    pr1 (pr222 (pr222 (pr222 (pr222 (pr22 L))))).
+  Definition kjoin_tsup :
+    (∏ (x : L)(Y : {set : L}), x <+> (⊔ Y) = ⊔(image_hsubtype Y (fun y => x <+> y))) :=
+    pr12 (pr222 (pr222 (pr222 (pr222 (pr22 L))))).
+  Definition kjoin_kinf :
+    (∏ (x : L)(Y : {set : L}), x <+> (Π Y) = Π (image_hsubtype Y (fun y => x <+> y))) :=
+    pr122 (pr222 (pr222 (pr222 (pr222 (pr22 L))))).
+  Definition kjoin_ksup :
+    (∏ (x : L)(Y : {set : L}), x <+> (Σ Y) = Σ (image_hsubtype Y (fun y => x <+> y))) :=
+    pr222 (pr222 (pr222 (pr222 (pr222 (pr22 L))))).
+  
+End compdistrProperties.
+§
 
 Definition isNegation {T} {L : bilattice T} (bneg : L -> L) :=
   (∏ x y, x ≺t y -> bneg y ≺t bneg x) ×
