@@ -87,14 +87,14 @@ End compbilatProperties.
 
 (*  8 monotonic conditions, operators [kmeet,kjoin,tmeet,tjon] are monotone with respect to both of [tle,kle].*)
 Definition isInterlaced {T} (L : bilattice T) :=  
-  (∏ (x y : L), x ≺t y -> (x <∧> y) ≺t (x <∧> y)) ×
-  (∏ (x y : L), x ≺t y -> (x <∨> y) ≺t (x <∨> y)) ×
+  (* (∏ (x y : L), x ≺t y -> (x <∧> y) ≺t (x <∧> y)) × *)
+  (* (∏ (x y : L), x ≺t y -> (x <∨> y) ≺t (x <∨> y)) × *)
   (∏ (x y : L), x ≺t y -> (x <*> y) ≺t (x <*> y)) ×
   (∏ (x y : L), x ≺t y -> (x <+> y) ≺t (x <+> y)) ×
   (∏ (x y : L), x ≺k y -> (x <∧> y) ≺k (x <∧> y)) ×
-  (∏ (x y : L), x ≺k y -> (x <∨> y) ≺k (x <∨> y)) ×
-  (∏ (x y : L), x ≺k y -> (x <*> y) ≺k (x <*> y)) ×
-  (∏ (x y : L), x ≺k y -> (x <+> y) ≺k (x <+> y)).
+  (∏ (x y : L), x ≺k y -> (x <∨> y) ≺k (x <∨> y)).
+  (* (∏ (x y : L), x ≺k y -> (x <*> y) ≺k (x <*> y)) × *)
+  (* (∏ (x y : L), x ≺k y -> (x <+> y) ≺k (x <+> y)). *)
 Definition interlaced T := ∑ L : bilattice T, isInterlaced L.
 Coercion interlacedToBilattice {T} (L : interlaced T) : bilattice T := pr1 L.
 
@@ -103,15 +103,20 @@ Section interlacedProperties.
   
   Variable X : hSet.
   Variable L : interlaced X.
+
+  Definition kmeetMonotonet : ∏ x y, x ≺t y -> (x <*> y) ≺t (x <*> y) := pr1 (pr2 L).
+  Definition kjoinMonotonet : ∏ x y, x ≺t y -> (x <+> y) ≺t (x <+> y) := pr12 (pr2 L).
+  Definition tmeetMonotonek : ∏ x y, x ≺k y -> (x <∧> y) ≺k (x <∧> y) := pr122 (pr2 L).
+  Definition tjoinMonotonek : ∏ x y, x ≺k y -> (x <∨> y) ≺k (x <∨> y) := pr222 (pr2 L).
   
-  Definition tmeetMonotonet : ∏ x y, x ≺t y -> (x <∧> y) ≺t (x <∧> y) := pr1 (pr2 L).
-  Definition tjoinMonotonet : ∏ x y, x ≺t y -> (x <∨> y) ≺t (x <∨> y) := pr12 (pr2 L).
-  Definition kmeetMonotonet : ∏ x y, x ≺t y -> (x <*> y) ≺t (x <*> y) := pr122 (pr2 L).
-  Definition kjoinMonotonet : ∏ x y, x ≺t y -> (x <+> y) ≺t (x <+> y) := pr1 (pr222 (pr2 L)).
-  Definition tmeetMonotonek : ∏ x y, x ≺k y -> (x <∧> y) ≺k (x <∧> y) := pr12 (pr222 (pr2 L)).
-  Definition tjoinMonotonek : ∏ x y, x ≺k y -> (x <∨> y) ≺k (x <∨> y) := pr122 (pr222 (pr2 L)).
-  Definition kmeetMonotonek : ∏ x y, x ≺k y -> (x <*> y) ≺k (x <*> y) := pr1 (pr222 (pr222 (pr2 L))).
-  Definition kjoinMonotonek : ∏ x y, x ≺k y -> (x <+> y) ≺k (x <+> y) := pr2 (pr222 (pr222 (pr2 L))).
+  (* Definition tmeetMonotonet : ∏ x y, x ≺t y -> (x <∧> y) ≺t (x <∧> y) := pr1 (pr2 L). *)
+  (* Definition tjoinMonotonet : ∏ x y, x ≺t y -> (x <∨> y) ≺t (x <∨> y) := pr12 (pr2 L). *)
+  (* Definition kmeetMonotonet : ∏ x y, x ≺t y -> (x <*> y) ≺t (x <*> y) := pr122 (pr2 L). *)
+  (* Definition kjoinMonotonet : ∏ x y, x ≺t y -> (x <+> y) ≺t (x <+> y) := pr1 (pr222 (pr2 L)). *)
+  (* Definition tmeetMonotonek : ∏ x y, x ≺k y -> (x <∧> y) ≺k (x <∧> y) := pr12 (pr222 (pr2 L)). *)
+  (* Definition tjoinMonotonek : ∏ x y, x ≺k y -> (x <∨> y) ≺k (x <∨> y) := pr122 (pr222 (pr2 L)). *)
+  (* Definition kmeetMonotonek : ∏ x y, x ≺k y -> (x <*> y) ≺k (x <*> y) := pr1 (pr222 (pr222 (pr2 L))). *)
+  (* Definition kjoinMonotonek : ∏ x y, x ≺k y -> (x <+> y) ≺k (x <+> y) := pr2 (pr222 (pr222 (pr2 L))). *)
     
 End interlacedProperties.
 
