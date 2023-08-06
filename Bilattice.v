@@ -5,7 +5,7 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 Definition bilattice (T : hSet) := lattice T × lattice T.
-Definition make_bilattice {T} (L1 L2 : lattice T) := L1 ,, L2.
+Definition make_bilattice {T} (L1 L2 : lattice T) : bilattice T := L1 ,, L2.
 Coercion bilatticeToSet {T} (_ : bilattice T) := T.
 
 Definition compbilat (T : hSet) := complat T × complat T.
@@ -271,3 +271,4 @@ Definition isConflation {T} {L : bilattice T} (confl : L -> L ) :=
 
 Definition isNagConfl {T} {L : bilattice T} (bneg confl : L -> L) :=
   isNegation bneg × isConflation confl × (∏ x, confl (bneg x) = bneg (confl x)).
+  
