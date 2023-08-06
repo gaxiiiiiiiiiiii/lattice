@@ -268,3 +268,14 @@ Proof.
     - apply Hm; auto.
     - apply Ha; auto.
 Qed.
+
+(***********************)
+(* distributed lattice *)
+(***********************)
+
+Print isdistr.
+Print isldistr.
+
+Definition distrlat (T : hSet) := ∑ L : lattice T, isldistr  (pr1 L) (pr12 L).
+Coercion sitrlatToLattice {T : hSet} (L : distrlat T) : lattice T := pr1 L.
+Definition isDistr {T : hSet} (L : distrlat T) := pr2 L.
