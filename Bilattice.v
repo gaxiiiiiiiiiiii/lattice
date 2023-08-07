@@ -9,7 +9,7 @@ Definition make_bilattice {T} (L1 L2 : lattice T) : bilattice T := L1 ,, L2.
 Coercion bilatticeToSet {T} (_ : bilattice T) := T.
 
 Definition compbilat (T : hSet) := complat T × complat T.
-Definition make_compbilat {T} (L1 L2 : complat T) := L1 ,, L2.
+Definition make_compbilat {T} (L1 L2 : complat T) : compbilat T := L1 ,, L2.
 Coercion compbilatToPrebilattice {T} (L : compbilat T) : bilattice T := make_bilattice (pr11 L) (pr12 L).
 
 Definition tmeet {T} {L : bilattice T} (x y : L) : L := @meet _ (pr1 L) x y.
