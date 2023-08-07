@@ -359,23 +359,3 @@ Section complatTheory.
   Qed. *)
 
 End complatTheory.  
-
-
-
-
-
-  
-  
-  
-
-  
-
-
-
-
-
-
-  
-
-
-
