@@ -99,10 +99,10 @@ Section interlacedProperties.
   Variable X : hSet.
   Variable L : interlaced X.
 
-  Definition kmeetMonotonet : ∏ x y z, x ≺t y -> (x <*> z) ≺t (y <*> z) := pr1 (pr2 L).
-  Definition kjoinMonotonet : ∏ x y z, x ≺t y -> (x <+> z) ≺t (y <+> z) := pr12 (pr2 L).
-  Definition tmeetMonotonek : ∏ x y z, x ≺k y -> (x <∧> z) ≺k (y <∧> z) := pr122 (pr2 L).
-  Definition tjoinMonotonek : ∏ x y z, x ≺k y -> (x <∨> z) ≺k (y <∨> z) := pr222 (pr2 L).
+  Definition tle_kmeet_monotone : ∏ x y z, x ≺t y -> (x <*> z) ≺t (y <*> z) := pr1 (pr2 L).
+  Definition tle_kjoin_monotone : ∏ x y z, x ≺t y -> (x <+> z) ≺t (y <+> z) := pr12 (pr2 L).
+  Definition kle_tmeet_monotone : ∏ x y z, x ≺k y -> (x <∧> z) ≺k (y <∧> z) := pr122 (pr2 L).
+  Definition kle_tjoin_monotone : ∏ x y z, x ≺k y -> (x <∨> z) ≺k (y <∨> z) := pr222 (pr2 L).
     
 End interlacedProperties.
 
