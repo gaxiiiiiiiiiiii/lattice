@@ -85,10 +85,10 @@ End compbilatProperties.
 
 (*  8 monotonic conditions, operators [kmeet,kjoin,tmeet,tjon] are monotone with respect to both of [tle,kle].*)
 Definition isInterlaced {T} (L : bilattice T) :=  
-  (∏ (x y z : L), x ≺t y -> (x <*> z) ≺t (x <*> z)) ×
-  (∏ (x y z : L), x ≺t y -> (x <+> z) ≺t (x <+> z)) ×
-  (∏ (x y z : L), x ≺k y -> (x <∧> z) ≺k (x <∧> z)) ×
-  (∏ (x y z : L), x ≺k y -> (x <∨> z) ≺k (x <∨> z)).
+  (∏ (x y z : L), x ≺t y -> (x <*> z) ≺t (y <*> z)) ×
+  (∏ (x y z : L), x ≺t y -> (x <+> z) ≺t (y <+> z)) ×
+  (∏ (x y z : L), x ≺k y -> (x <∧> z) ≺k (y <∧> z)) ×
+  (∏ (x y z : L), x ≺k y -> (x <∨> z) ≺k (y <∨> z)).
 
 Definition interlaced T := ∑ L : bilattice T, isInterlaced L.
 Coercion interlacedToBilattice {T} (L : interlaced T) : bilattice T := pr1 L.
@@ -99,10 +99,10 @@ Section interlacedProperties.
   Variable X : hSet.
   Variable L : interlaced X.
 
-  Definition kmeetMonotonet : ∏ x y z, x ≺t y -> (x <*> z) ≺t (x <*> z) := pr1 (pr2 L).
-  Definition kjoinMonotonet : ∏ x y z, x ≺t y -> (x <+> z) ≺t (x <+> z) := pr12 (pr2 L).
-  Definition tmeetMonotonek : ∏ x y z, x ≺k y -> (x <∧> z) ≺k (x <∧> z) := pr122 (pr2 L).
-  Definition tjoinMonotonek : ∏ x y z, x ≺k y -> (x <∨> z) ≺k (x <∨> z) := pr222 (pr2 L).
+  Definition kmeetMonotonet : ∏ x y z, x ≺t y -> (x <*> z) ≺t (y <*> z) := pr1 (pr2 L).
+  Definition kjoinMonotonet : ∏ x y z, x ≺t y -> (x <+> z) ≺t (y <+> z) := pr12 (pr2 L).
+  Definition tmeetMonotonek : ∏ x y z, x ≺k y -> (x <∧> z) ≺k (y <∧> z) := pr122 (pr2 L).
+  Definition tjoinMonotonek : ∏ x y z, x ≺k y -> (x <∨> z) ≺k (y <∨> z) := pr222 (pr2 L).
     
 End interlacedProperties.
 
