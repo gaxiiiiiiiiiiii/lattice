@@ -213,7 +213,7 @@ Section prodbilatticeTheory.
   Variable T1 T2 : hSet.
   Variable L1 : lattice T1.
   Variable L2 : lattice T2.
-  Definition L := prodbilat L1 L2.
+  Notation L := (prodbilat L1 L2).
 
   Lemma pbl_kle (a1 b1 : L1) (a2 b2 : L2) :
     (a1,,a2 : L) ≺k (b1,,b2) <-> a1 ≺ b1 × b2 ≺ a2.
@@ -238,217 +238,174 @@ Section prodbilatticeTheory.
     - induction H.
       apply two_arg_paths; auto.      
   Qed.
+End prodbilatticeTheory.
+
+
   
-  Definition lecomp {T} {L : bilattice T} (f g : hrel L) : hrel L :=
-    fun x y => ∃ c, f x c ∧ g c y.
+Definition lecomp {T} {L : bilattice T} (f g : hrel L) : hrel L :=
+  fun x y => ∃ c, f x c ∧ g c y.
+
+Section bilateq.
+
+  Variable T : hSet.
+  Variable L : interlaced T.   
   
-  
-  Lemma pbl_lemeet (a b : L) :
+  Lemma kletmeet_tlekmeet (a b : L) :
     a ≺k a <∧> b <-> a ≺t a <*> b.
   Proof.
-    induction a as [a1 a2].
-    induction b as [b1 b2].
-    split => /= H; induction H; apply two_arg_paths; auto.
-    - rewrite meetjoinK joinmeetK; auto.
-    - rewrite meetjoinK joinmeetK; auto.
+    split => H.
+    - simpl in H.
+      assert (a <∧> b ≺t b). {
+        unfold tmeet. apply (meet_lowb).
+      }
+      move : (@tle_kmeet_monotone _ L _ _ a X).
+      rewrite meetC in H.
+      change (meet (a <∧> b) a) with ((a <∧> b) <*> a) in H.
+      rewrite H.
+      unfold kmeet.
+      rewrite (meetC a b); auto.
+    - assert (a <*> b ≺k b). {
+        unfold kmeet. apply meet_lowb.
+      }
+      move : (@kle_tmeet_monotone _ L _ _ a X).
+      simpl in H. rewrite meetC in H.
+      change (meet (a <*> b) a) with ((a <*> b) <∧> a) in H.
+      rewrite H.
+      unfold tmeet. rewrite meetC; auto.
   Qed.
 
-  Lemma lekmeet_lecomp (a b : L) :
-    a ≺k a <∧> b <-> lecomp kle tle a b.
+  Lemma kletmeet_kletle (a b : L) :
+    a ≺k a <∧> b -> lecomp kle tle a b.
   Proof.
-    induction a as [a1 a2].
-    induction b as [b1 b2].    
-    split => H.
-    - apply prod_dest in H.
-      induction H as [H1 H2].
-      simpl in *.
-      move => P; apply; clear P.
-      exists ((a1,,a2 : L) <∧> (b1,,b2)).
-      split => /=.  
-      * apply two_arg_paths; auto.
-      * unfold tmeet => //=.
-        apply two_arg_paths; auto;
-        rewrite meetA meetI; auto.
-    - simpl in H; unfold ishinh_UU in H.
-      apply H => [[[c1 c2] [H1 H2]]].
-      apply prod_dest in H1; induction H1 as [H11 H12].
-      apply prod_dest in H2; induction H2 as [H21 H22].
-      simpl in *.
-      apply two_arg_paths; auto.
-      * rewrite <- meetA, meetI.
-        eapply transL with c1; auto.
-      * rewrite joinmeetK; auto.
+    move => H P; apply; clear P.
+    exists (a <∧> b).
+    split; auto.  
+    unfold tmeet. apply meet_lowb.
   Qed.
 
-  Lemma letmeet_lecomp (a b : L) :
-    a ≺t a <*> b <-> lecomp tle kle a b.
+  Lemma kletle_tlekmeet (a b : L) :
+    lecomp kle tle a b -> a ≺t a <*> b.
   Proof.
-    induction a as [a1 a2].
-    induction b as [b1 b2].    
-    split => H.
-    - apply prod_dest in H.
-      induction H as [H1 H2].
-      simpl in *.
-      move => P; apply; clear P.
-      exists ((a1,,a2 : L) <*> (b1,,b2)).
-      split => /=.  
-      * apply two_arg_paths; auto.
-      * unfold kmeet => //=.
-        apply two_arg_paths; auto.
-        + rewrite meetA meetI; auto.
-        + rewrite joinA joinI; auto.
-    - simpl in H; unfold ishinh_UU in H.
-      apply H => [[[c1 c2] [H1 H2]]].
-      apply prod_dest in H1; induction H1 as [H11 H12].
-      apply prod_dest in H2; induction H2 as [H21 H22].
-      simpl in *.
-      apply two_arg_paths; auto.
-      * rewrite <- meetA, meetI.
-        eapply transL with c1; auto.
-      * rewrite meetjoinK; auto.
+    move => H.
+    unfold lecomp, ishinh, ishinh_UU in H.
+    apply H => [[c [ac cb]]].
+    move : (@tle_kmeet_monotone _ L _ _ a cb).
+    simpl in ac. rewrite meetC in ac.
+    unfold kmeet.
+    rewrite ac (meetC b a); auto.
+  Qed.
+
+  Lemma tlekmeet_tlekle (a b : L) :
+    a ≺t a <*> b -> lecomp tle kle a b.
+  Proof.    
+    
+    move => H P; apply; clear P.
+    exists (a <*> b); split; auto.
+    apply meet_lowb.   
   Defined.
 
-  Lemma pbl_lecompC (a b : L) :
+  Definition tlekle_kletmeet (a b : L) :
+    lecomp tle kle a b -> a ≺k a <∧> b.
+  Proof.
+    move => H; unfold lecomp, ishinh, ishinh_UU in H.
+    apply H => [[c [ac cb]]].
+    move : (@kle_tmeet_monotone _ L _ _ a cb).
+    unfold tmeet.
+    simpl in ac.
+    rewrite (meetC c a) ac (meetC b a); auto.
+Qed.
+
+  Lemma locomp_inv (a b : L) :
     lecomp kle tle a b <-> lecomp tle kle a b.
   Proof.
     split => H.
-    - apply letmeet_lecomp.
-      apply pbl_lemeet.
-      apply lekmeet_lecomp; auto.
-    - apply lekmeet_lecomp.
-      apply pbl_lemeet.
-      apply letmeet_lecomp; auto.
+    - apply tlekmeet_tlekle.
+      apply kletle_tlekmeet; auto.
+    - apply kletmeet_kletle.
+      apply tlekle_kletmeet; auto.
   Qed.
 
   Definition kle' (x y : L) := kle y x.
 
   Notation "x ≻k y" := (kle' x y)(at level 40).
   
-  Lemma pbl_lemeet' (a b : L) :
-    a <∧> b ≺k a <-> a ≺t a <+> b.
+  Lemma kletmeet_tlekmeet' (a b : L) :
+    a ≻k a <∧> b <-> a ≺t a <+> b.
   Proof.
-    induction a as [a1 a2].
-    induction b as [b1 b2].
-    unfold tmeet; simpl.
-    split => H; inversion H;
-    apply two_arg_paths; auto.
-    - apply meetjoinK.
-    - rewrite <- H2.
-      rewrite (joinC _ a2) (joinC _ a2) joinmeetK meetjoinK; auto.
-    - rewrite meetjoinK (meetC _ a1).
-      rewrite <- meetA, meetI; auto.
-    - rewrite <- (meetA a2 a2 b2), meetI.
-      rewrite (meetA a2 b2 b2) meetI joinI; auto.
-  Qed.      
-
-
-  Lemma lekmeet_lecomp' (a b : L) :
-    a <∧> b ≺k a <-> lecomp kle' tle a b.
-  Proof.
-    induction a as [a1 a2].
-    induction b as [b1 b2].
     split => H.
-    - apply prod_dest in H.
-      induction H as [H1 H2].
-      simpl in *.
-      move => P; apply; clear P.
-      exists ((a1,,a2 : L) <∧> (b1,,b2)).
-      split.
-      * unfold tmeet => /=.  
-        apply two_arg_paths; auto.
-      * unfold tmeet => /=.  
-        apply two_arg_paths; auto;
-        rewrite meetA meetI; auto.
-    - simpl in H; unfold ishinh_UU in H.
-      apply H => [[[c1 c2] [H1 H2]]].
-      apply prod_dest in H1; induction H1 as [H11 H12].
-      apply prod_dest in H2; induction H2 as [H21 H22].
-      simpl in *.
-      unfold tmeet; simpl.
-      apply two_arg_paths; auto.
-      * rewrite meetC. rewrite <- meetA, meetI; auto.
-      * rewrite joinC joinmeetK; auto.
-        apply pathsinv0.
-        apply transL with c2; auto.
-        apply meet_join.
-        rewrite joinC; auto.
+    - simpl in H.
+      apply meet_join in H.
+      assert (a <∧> b ≺t b). {
+        unfold tmeet. apply (meet_lowb).
+      }
+      move : (@tle_kjoin_monotone _ L _ _ a X).
+      unfold tmeet, kjoin in *.
+      rewrite H joinC; auto.
+    - assert (b ≺k a <+> b). {
+        unfold kmeet. apply join_upb.
+      }
+      unfold kle'.
+      simpl in H.
+      move : (@kle_tmeet_monotone _ L _ _ a X).
+      rewrite meetC in H.
+      unfold tmeet.
+      rewrite H meetC; auto.
   Qed.
 
-  Lemma letmeet_lecomp' (a b : L) :
-    a ≺t a <+> b <-> lecomp tle kle' a b.
+  Lemma kletmeet_kletle' (a b : L) :
+    a ≻k a <∧> b -> lecomp kle' tle a b.
   Proof.
-    induction a as [a1 a2].
-    induction b as [b1 b2].    
-    split => H.
-    - apply prod_dest in H.
-      induction H as [H1 H2].
-      simpl in *.
-      move => P; apply; clear P.
-      exists ((a1,,a2 : L) <+> (b1,,b2)).
-      split => /=.  
-      * apply two_arg_paths; auto.
-      * apply two_arg_paths; auto.
-        + rewrite joinC meetjoinK; auto.
-        + rewrite meetC joinmeetK; auto.
-    - simpl in H; unfold ishinh_UU in H.
-      apply H => [[[c1 c2] [H1 H2]]].
-      apply prod_dest in H1; induction H1 as [H11 H12].
-      apply prod_dest in H2; induction H2 as [H21 H22].
-      simpl in *.
-      apply two_arg_paths; auto.
-      * apply meetjoinK.
-      * rewrite <- meetA, meetI.
-        eapply transL with c2; auto.
-        apply meet_join.
-        rewrite joinC; auto.
+    move => H P; apply; clear P.
+    exists (a <∧> b).
+    split; auto.  
+    unfold tmeet. apply meet_lowb.
+  Qed.
+
+  Lemma kletle_tlekmeet' (a b : L) :
+    lecomp kle' tle a b -> a ≺t a <+> b.
+  Proof.
+    move => H.
+    unfold lecomp, ishinh, ishinh_UU in H.
+    apply H => [[c [ac cb]]].
+    simpl in ac.
+    apply meet_join in ac.
+    change (join c a) with (c <+> a) in ac.
+    move : (@tle_kjoin_monotone _ L _ _ a cb).
+    rewrite ac.
+    unfold kjoin.
+    rewrite joinC; auto.
+  Qed.
+
+  Lemma tlekmeet_tlekle' (a b : L) :
+    a ≺t a <+> b -> lecomp tle kle' a b.
+  Proof.        
+    move => H P; apply; clear P.
+    exists (a <+> b); split; auto.
+    apply join_upb.
   Defined.
 
-  Lemma pbl_lecompC' (a b : L) :
+  Definition tlekle_kletmeet' (a b : L) :
+    lecomp tle kle' a b -> a ≻k a <∧> b.
+  Proof.
+    move => H; unfold lecomp, ishinh, ishinh_UU in H.
+    apply H => [[c [ac cb]]].
+    move : (@kle_tmeet_monotone _ L _ _ a cb).
+    simpl in ac.
+    rewrite meetC in ac.
+    (* change (meet c a) with (c <∧> a) in ac. *)
+    unfold tmeet.
+    rewrite ac meetC; auto.
+  Qed.
+
+  Lemma locomp_inv' (a b : L) :
     lecomp kle' tle a b <-> lecomp tle kle' a b.
   Proof.
     split => H.
-    - apply letmeet_lecomp'.
-      apply pbl_lemeet'.
-      apply lekmeet_lecomp'; auto.
-    - apply lekmeet_lecomp'.
-      apply pbl_lemeet'.
-      apply letmeet_lecomp'; auto.
+    - apply tlekmeet_tlekle'.
+      apply kletle_tlekmeet'; auto.
+    - apply kletmeet_kletle'.
+      apply tlekle_kletmeet'; auto.
   Qed.
-  
- 
-
-  (* Lemma lecompI (R : hrel L) :
-    lecomp cong1 cong1 = cong1.
-  Proof.
-    apply funextsec => x.
-    apply funextsec => y.
-    unfold lecomp.
-    apply hPropUnivalence.
-    - unfold ishinh, ishinh_UU.
-      apply => [[c [H1 H2]]].
-      unfold cong1, lecomp in H1, H2.
-      unfold ishinh, ishinh_UU in H1, H2.
-      apply H1 => [[a [xa ac]]].
-      apply H2 => [[b [cb by_]]].
-      clear H1 H2.
-      assert (cong1 a b). {
-        unfold cong1.
-        apply pbl_lecompC.
-        move => P; apply; clear P.
-        exists c; split; auto.
-      }
-      unfold cong1, lecomp, ishinh, ishinh_UU in X.
-      apply X => [[d [ad db]]].
-      move => P; apply; clear P.
-      exists d; split.
-      * apply transL with a; auto.
-      * apply transL with b; auto.
-    - move => H.
-      move => P; apply; clear P.
-      exists y; split; auto.
-      move => P; apply; clear P.
-      exists y; split; unfold tle, kle; apply meetI.
-  Qed. *)
 
   Definition cong1 : hrel L := lecomp kle tle.
   
@@ -461,7 +418,7 @@ Section prodbilatticeTheory.
     apply xy => [[a [xa ay]]].
     apply yz => [[b [yb bz]]].
     assert (cong1 a b). {
-      apply pbl_lecompC.
+      apply locomp_inv.
       move => P; apply; clear P.
       exists y; split; auto.
     }
@@ -480,7 +437,7 @@ Section prodbilatticeTheory.
     exists x; split; apply meetI.
   Qed.
 
-  Definition eq1 : hrel L :=
+  Definition eq1 : hrel T :=
     fun x y => cong1 x y ∧ cong1 y x.
   
   Lemma iseqrel_eq1 : iseqrel eq1.
@@ -491,6 +448,8 @@ Section prodbilatticeTheory.
     - move => a; split; apply isrefl_cong1.
     - move => a b [ab ba]; split; auto.
   Qed.
+
+  Definition Eq1 : eqrel T := make_eqrel _ iseqrel_eq1.
 
   Definition cong2 : hrel L := lecomp kle' tle.
 
@@ -504,7 +463,7 @@ Section prodbilatticeTheory.
     apply yz => [[b [yb bz]]].
     assert (cong2 a b). {
       unfold cong2.      
-      apply pbl_lecompC'.
+      apply locomp_inv'.
       move => P; apply; clear P.
       exists y; split; auto.
     }
@@ -523,7 +482,7 @@ Section prodbilatticeTheory.
     exists x; split; apply meetI.
   Qed.
 
-  Definition eq2 : hrel L :=
+  Definition eq2 : hrel T :=
     fun x y => cong2 x y ∧ cong2 y x.
   
   Lemma iseqrel_eq2 : iseqrel eq2.
@@ -534,51 +493,93 @@ Section prodbilatticeTheory.
     - move => a; split; apply isrefl_cong2.
     - move => a b [ab ba]; split; auto.
   Qed.
-End prodbilatticeTheory.
-Check eq1.
-Definition isoprodbilat {T : hSet} (L : bilattice T) 
 
-Theorem bilattice_prodbilat {T : hSet} (L : lattice T) :
-  ∑ T1 T2, L ≃ 
+  Definition Eq2 : eqrel T := make_eqrel _ iseqrel_eq2.
 
+End bilateq.
 
+Section bilateqTheory.
 
-    
+  Variable (T : hSet).
+  Variable (L : interlaced T).
+  Notation R1 := (Eq1 T L).
+  Notation R2 := (Eq2 T L).
 
+  Lemma tmeet_kjoin (x y : L) :
+    R1 x y -> x <∧> y = x <+> y.
+  Proof.
 
-    
-    
-    
-    
-    
-    
+    move => [H1 H2].
+    apply kletle_tlekmeet in H1, H2.
 
+    (* move : (@tle_kjoin_monotone _ L _ _ y H1) => H1'.
+    unfold kmeet, kjoin in H1'.
+    rewrite (joinC (meet x y) y) meetC joinmeetK in H1'.
+    change (join x y ≺t y) with ((x <+> y) ≺t y) in H1'.
+    move : (@tle_kjoin_monotone _ L _ _ x H2) => H2'.
+    unfold kmeet, kjoin in H2'.
+    rewrite (joinC (meet y x) x) meetC joinmeetK in H2'.
+    change (join y x ≺t x) with ((y <+> x) ≺t x) in H2'.
+
+    assert (x <+> y ≺t x <*> y). {
+      apply transL with x; auto.
+      unfold kjoin. rewrite joinC. auto.
+    }
+
+    simpl in X.
+    change ( meet (x <+> y) (x <*> y)) with ((x <+> y) <∧> (x <*> y)) in X.
+    clear H1' H2'. *)
+
+    apply kletmeet_tlekmeet in H1, H2.
+    move : (@kle_tjoin_monotone _ L _ _ y H1) => H1'.
+    unfold tmeet, tjoin in H1'.
+    rewrite (joinC (meet x y) y) meetC joinmeetK in H1'.
+    change (join x y ≺k y) with ((x <∨> y) ≺k y) in H1'.
+    move : (@kle_tjoin_monotone _ L _ _ x H2) => H2'.
+    unfold tmeet, tjoin in H2'.
+    rewrite (joinC (meet y x) x) meetC joinmeetK in H2'.
+    change (join y x ≺k x) with ((y <∨> x) ≺k x) in H2'.
+
+    assert (x <∨> y ≺k x <∧> y). {
+      apply transL with x; auto.
+      unfold tjoin. rewrite joinC. auto.
+    }
+    assert (x <*> y ≺k x <∧> y). {
+      apply transL with x; auto.
+      apply meet_lowb.    
+    }
+    assert (x <∨> y ≺k x <+> y). {
+      apply transL with y; auto.
+      apply join_upb.
+    }
+
+    (*
+          -----------------------------
+         |         -----------         |
+         |         |         |         |
+      x <∨> y ≺ x <*> y ≺ x <+> y ≺ x <∧> y
+         |         |         |         |
+         ---------------------
+                   |                   |
+                   ---------------------
+    *)
+    apply (@antisymL _ (pr21 L)).
+    - admit.
+    - admit.
+Abort.    
   
 
-    
-
-        
-
-    
-
-
-
-
-  
-
-
-
-    
-   
-
-  
-  
-
-
-
-
-
-
-  
-
-  
+  Lemma R1_isCongruence (x y a b : L) :
+    R1 x y -> R1 a b ->
+    R1 (x <∧> a) (y <∧> b) ×
+    R1 (x <∨> a) (y <∨> b) ×
+    R1 (x <*> a) (y <*> b) ×
+    R1 (x <+> a) (y <+> b).
+  Proof.
+    move => [xy yx] [ab ba].
+    apply kletle_tlekmeet in xy, yx, ab, ba.
+    split; [|split; [|split]]; split.
+    all : apply kletmeet_kletle.
+    all : apply kletmeet_tlekmeet.
+  Abort.
+End bilateqTheory.
