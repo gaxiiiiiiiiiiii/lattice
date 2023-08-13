@@ -1,7 +1,7 @@
 Require Export Bilattice.
 From UniMath Require Import MoreFoundations.Univalence.
 
-Lemma prod_dest {A B : UU} {a b : A × B} : a = b -> pr1 a = pr1 b × pr2 a = pr2 b.
+Lemma prod_dest {A B : hSet} {a b : A × B} : a = b -> pr1 a == pr1 b × pr2 a == pr2 b.
 Proof.
   destruct a as [a1 a2], b as [b1 b2]; simpl => H.
   inversion H; split; auto.
