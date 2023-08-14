@@ -167,6 +167,13 @@ Section complatTheory.
     - apply is_lowb; auto.
   Qed.
 
+  Lemma lfp_prefixpoint (f : L -> L) (Hf : mono f) (x : L) :
+    f x ≺ x -> lfp f Hf ≺ x.
+  Proof.
+    move => H.
+    apply is_lowb; auto.
+  Qed.
+
   Lemma tarski_gfp (f : L -> L) (Hf : mono f):
     is_gfp f (gfp f Hf).
   Proof.
@@ -212,6 +219,13 @@ Section complatTheory.
       unfold In.
       rewrite <- H.
       apply reflL.      
+  Qed.  
+
+  Lemma gfp_postfixpoint (f : L -> L) (Hf : mono f) (x : L) :
+    x ≺ f x -> x ≺ gfp f Hf.
+  Proof.
+    move => H.
+    apply is_upb; auto.
   Qed.
 
   Lemma sup_join (x y : L) :
