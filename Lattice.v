@@ -224,7 +224,7 @@ Definition antimono {T : hSet }{L1 L2 : lattice T}(f : L1 -> L2) :=
   ∏ a b : L1, a ≺ b -> f b ≺ f a.  
 
 Definition directed {T : hSet} {L : lattice T}(X : {set : L}) :=
-  ∏ x y, x ∈ X -> y ∈ X -> ∃ z, z ∈ X ∧ x ≺ z ∧ y ≺ z.
+  ∏ x y, x ∈ X -> y ∈ X -> ∑ z, z ∈ X × x ≺ z × y ≺ z.
 
 
 Lemma isapropMono {T : hSet}{L1 L2 : lattice T}(f : L1 -> L2) :
@@ -241,12 +241,6 @@ Proof.
   apply propproperty.
 Defined.
 
-Lemma isapropDirected {T : hSet}{L : lattice T}(X : {set : L}) :
-  isaprop (directed X).
-Proof.
-  repeat (apply impred; intro).
-  apply propproperty.
-Defined.
 
 Lemma antimono_compose_mono {T : hSet}{L1 L2 L3 : lattice T}(f : L1 -> L2)(g : L2 -> L3) :
     antimono f -> antimono g -> mono (g ∘ f).
