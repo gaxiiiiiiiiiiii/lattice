@@ -251,19 +251,19 @@ Section complatTheory.
     have HAB : directed AB. {
       move => x y Hx Hy.
       move : (join_upb x y) => [H1 H2].
-      move => P; apply; clear P.       
       exists (join x y).
       unfold AB, couple in Hx, Hy ; simpl in Hx, Hy.
+      repeat split.
       apply Hx; clear Hx => Hx.
       apply Hy; clear Hy => Hy.
-      repeat split; auto.
       simpl => P; apply.
       induction Hx as [Hx'|Hx'], Hy as [Hy'|Hy'];
       induction Hx', Hy'.
+      all : auto.      
       - left. apply joinI.
       - right. apply meet_join; auto.
       - right. rewrite joinC. apply meet_join; auto.
-      - right; apply joinI.
+      - right; apply joinI.      
     }
     move /H : HAB.
     simpl.
