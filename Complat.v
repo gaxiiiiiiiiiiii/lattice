@@ -372,4 +372,4 @@ Section complatTheory.
     }
   Qed. *)
 
-End complatTheory.  
+End complatTheory.

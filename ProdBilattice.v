@@ -1,5 +1,8 @@
+(* based on 'Bilattices are nace things' *)
+
 Require Export Bilattice.
 From UniMath Require Import MoreFoundations.Univalence.
+
 
 Lemma prod_dest {A B : hSet} {a b : A × B} : a = b -> pr1 a = pr1 b × pr2 a = pr2 b.
 Proof.
