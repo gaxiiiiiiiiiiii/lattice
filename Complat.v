@@ -78,7 +78,7 @@ Section complatTheory.
   Definition chain {X : hSet} {L : complat X} (f : L -> L) : {set : L} :=
     fun x => (∃ n, x = pow f n ⊥).
 
-  Definition kleene_lfp {T : hSet}{L : complat T}(f : L -> L) (Hf : mono f) :=
+  Definition kleene_lfp {T : hSet}{L : complat T}(f : L -> L) :=
     sup (chain f).
   
   Variable T : hSet.
@@ -251,6 +251,7 @@ Section complatTheory.
     have HAB : directed AB. {
       move => x y Hx Hy.
       move : (join_upb x y) => [H1 H2].
+      move => P; apply; clear P.
       exists (join x y).
       unfold AB, couple in Hx, Hy ; simpl in Hx, Hy.
       repeat split.
@@ -303,7 +304,7 @@ Section complatTheory.
 
   (* kleene's fixpoint theorem *)
 
-  (* Lemma powS (f : L -> L) (Hf : mono f) n :
+  Lemma powS (f : L -> L) (Hf : mono f) n :
     pow f n ⊥ ≺ pow f (n + 1) ⊥.
   Proof.
     induction n.
@@ -315,11 +316,12 @@ Section complatTheory.
     pow f n ⊥ ≺ pow f (n + m) ⊥.
   Proof.
     induction m.
-    - rewrite PeanoNat.Nat.add_0_r.
-      apply refl.
-    - apply trans with (pow f (n + m) ⊥); auto.
-      rewrite PeanoNat.Nat.add_succ_r.
-      rewrite <- PeanoNat.Nat.add_1_r.
+    - rewrite natplusr0.
+      apply reflL.
+    - apply transL with (pow f (n + m) ⊥); auto.      
+      rewrite natplusnsm.
+      change (S n + m) with (1 + (n + m)).
+      rewrite (natpluscomm 1 (n + m)).
       apply powS; auto.
     Qed.
     
@@ -327,49 +329,68 @@ Section complatTheory.
     directed (chain f).
   Proof.
     move => x y.
-    move  => [n ->] [m ->].
+    unfold chain, In.
+    move => Hx Hy.
+    unfold ishinh, ishinh_UU in Hx, Hy.
+    apply Hx => [[n]] ->.
+    apply Hy => [[m]] ->.
+    move => P; apply; clear P.
     exists (pow f (n + m) ⊥); repeat split.
-    - exists (n + m); auto.
+    - move => P; apply; clear P.
+      exists (n + m); auto.
     - apply powLe; auto.
-    - rewrite PeanoNat.Nat.add_comm.
+    - rewrite natpluscomm.
       apply powLe; auto.
   Qed.
 
   Theorem kleene  (f : L -> L):
-    continuous f -> is_lfp f (klfp f).
+    continuous f -> is_lfp f (kleene_lfp f).
   Proof.
-    unfold continuous.
     move => Hc.
-    move : (counti_mono Hc) => Hf.
-    move : (Hc _ (dir_chain Hf)) => Hd; clear Hc.
+    move : (counti_mono _ Hc) => Hf.
+    move : (Hc _ (dir_chain _ Hf)) => Hd; clear Hc.
     split.
-    { unfold klfp.
-      apply antisym.
+    { unfold kleene_lfp.
+      apply antisymL.
       - rewrite Hd.
         apply is_sup.
         move => x H.
-        inversion H; subst.
+        unfold image_hsubtype, In in H.
+        unfold ishinh, ishinh_UU in H.
+        apply H => [[a [fa_x Hfa]]].
+        rewrite <- fa_x.
+        unfold chain, ishinh, ishinh_UU in Hfa.
+        apply Hfa => [[n]] ->.
         apply is_upb.
-        inversion H0; subst.
-        exists (1 + x); auto.
-      - apply is_sup => x [n ->].
-        apply trans with (f (pow f n ⊥)).
-        - move : (powS Hf n).
-          rewrite PeanoNat.Nat.add_comm; auto.
+        unfold chain, In.
+        move => P; apply; clear P.
+        exists (1 + n); auto.
+      - apply is_sup => x H.
+        unfold chain, In in H.
+        unfold ishinh, ishinh_UU in H.
+        apply H => [[n]] ->.
+        apply transL with (f (pow f n ⊥)).
+        - move : (powS _ Hf n).
+          rewrite natpluscomm; auto.
         - apply Hf.
           apply is_upb.
+          unfold chain, In.
+          move => P; apply; clear P.
           exists n; auto.
     }
     {
       move => x Hx.
-      unfold klfp.
-      apply is_sup => y [n Hn].
-      subst y.
+      unfold kleene_lfp.
+      apply is_sup => y H.
+      unfold chain, In in H.
+      unfold ishinh, ishinh_UU in H.
+      apply H => [[n]] ->.
+      (* subst y. *)
       induction n.
       - apply bot_min.
       - rewrite <- Hx.
         apply Hf; auto.
     }
-  Qed. *)
+  Qed.
 
 End complatTheory.
