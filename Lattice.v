@@ -199,7 +199,8 @@ End transLheory.
 (* Monotony and etc. *)
 (*********************)
 
-Global Notation "{set : X }" := (hsubtype X).
+(* Global Notation "{set : X }" := (hsubtype X). *)
+Global Notation "{set : X }" := (subtype_set X).
 Definition In {T : hSet} (A : {set : T}) (a : T) := A a. 
 Global Notation "a ∈ A" := (In A a) (at level 70).
 
@@ -224,7 +225,7 @@ Definition antimono {T : hSet }{L1 L2 : lattice T}(f : L1 -> L2) :=
   ∏ a b : L1, a ≺ b -> f b ≺ f a.  
 
 Definition directed {T : hSet} {L : lattice T}(X : {set : L}) :=
-  ∏ x y, x ∈ X -> y ∈ X -> ∑ z, z ∈ X × x ≺ z × y ≺ z.
+  ∏ x y, x ∈ X -> y ∈ X -> ∃ z, z ∈ X × x ≺ z × y ≺ z.
 
 
 Lemma isapropMono {T : hSet}{L1 L2 : lattice T}(f : L1 -> L2) :
