@@ -5,7 +5,6 @@ From UniMath Require Export OrderTheory.DCPOs.AlternativeDefinitions.FixedPointT
 Open Scope DCPO.
 Open Scope poset.
 
-
 Definition consistents {T} (L : complat T) : Type :=
   ∑ p : L^2, consistent p.
 Definition consistentsL2 {T} {L : complat T} : consistents L -> L^2 := pr1.
@@ -21,10 +20,10 @@ Proof.
     exact (propproperty (consistent p)).
 Qed.
 
-Definition Lc {T} (L : complat T) : hSet := make_hSet (consistents L) (isaset_consistents L).
-(* Notation "L ^c" := (Lc L) (at level 10). *)
+Definition Lc_hSet {T} (L : complat T) : hSet := make_hSet (consistents L) (isaset_consistents L).
 
-Definition cle {T} {L : complat T} : hrel (Lc L) :=
+
+Definition cle {T} {L : complat T} : hrel (Lc_hSet L) :=
   fun x y => (@kle _ (L^2) (pr1 x) (pr1 y)).
   
 
@@ -32,7 +31,7 @@ Definition dcpoLc {T} (L : complat T) : dcpowithbottom.
 Proof.  
   unfold dcpowithbottom.
   repeat use tpair.
-  - exact (Lc L).
+  - exact (Lc_hSet L).
   - exact cle.
   - move => [x Hx] [y Hy] [z Hz].
     unfold cle, pr1 => xy yz.
@@ -59,11 +58,9 @@ Proof.
       * set X : {set : L^2 }:=  fun x => ∃ i, x = f i.
         set X1 : {set : L} := fun x => ∃ y, X (x,,y).
         set X2 : {set : L} := fun y => ∃ x, X (x,,y).
-        exact (sup X1,, inf X2).
-      *  
+        exact (sup X1,, inf X2).      
+      * simpl.
 
-        
-        
         apply is_sup => a.
         unfold In, pr2 => Ha.
         unfold ishinh, ishinh_UU in Ha.
@@ -75,24 +72,37 @@ Proof.
         unfold ishinh, ishinh_UU in Hb.
         apply Hb => [[y Hx]]; clear Hb.
         apply Hx => [[j Hj]]; clear Hx.
-        
+
+        induction H as [_ H].
+        specialize (H i j).
+        unfold ishinh, ishinh_UU in H.
+        apply H => [[k [ik jk]]]; clear H.
+        induction (f k) as [[k1 k2] Hfk].
+        unfold consistent in Hfk; simpl in Hfk.
+
+
         induction (f i) as [fi Hfi].
-        simpl in Hi.
-        unfold consistent in Hfi.
-        rewrite <- Hi in Hfi.
+        simpl in Hi,ik.
+        unfold consistent in Hfi.        
+        rewrite <- Hi in Hfi, ik.
         unfold pr1, pr2 in Hfi.
 
         induction (f j) as [fj Hfj].
-        simpl in Hj.
+        simpl in Hj, jk.
         unfold consistent in Hfj.
-        rewrite <- Hj in Hfj.
-        unfold pr1, pr2 in Hfj.       
+        rewrite <- Hj in Hfj, jk.
+        unfold pr1, pr2 in Hfj.
         clear Hi Hj.
 
-        apply transL with x; auto.
-        apply transL with y; auto.
+        apply prod_dest in ik,jk.
+        unfold pr1,pr2 in ik,jk.
+        induction ik as [ak1 xk2], jk as[yk1 bk2].
+        rewrite joinC in xk2; apply meet_join in xk2. 
+        rewrite joinC in bk2; apply meet_join in bk2.
 
-        admit.
+        apply transL with k1; auto.
+        apply transL with k2; auto.
+
       * simpl.
         unfold islub => /=.
         split.
@@ -152,4 +162,8 @@ Proof.
     apply two_arg_paths.
     * apply bot_min.
     * rewrite joinC. apply meet_join. apply top_max.
-Admitted.
+Qed. 
+
+Notation "L ^c" := (dcpoLc L) (at level 10).
+
+Search leastfixedpoint.
