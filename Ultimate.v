@@ -1,6 +1,8 @@
 Require Export Approximation.
+
 From UniMath Require Export OrderTheory.DCPOs.AlternativeDefinitions.Dcpo.
 From UniMath Require Export OrderTheory.DCPOs.AlternativeDefinitions.FixedPointTheorems.
+
 
 Open Scope DCPO.
 Open Scope poset.
@@ -237,6 +239,8 @@ Proof.
 Defined.
 
 End interval_complat.
+
+
 
 Definition consistents {T} (L : complat T) : Type :=
   ∑ p : L^2, consistent p.
@@ -1304,11 +1308,740 @@ Qed.
 
 End stable_monotonicity.
 
-  
-  
-  
+Definition stable_revision' {T} {L : complat T}  (A : Appx L) (p : L^c) (Hp : reliable (pr11 A) p) : L^2 :=  
+  pr11 (stable_revision A (p,, Hp)),, pr12 (stable_revision A (p,, Hp)).
 
-  
 
-  
+Lemma stable_fixpoint_monotonicity {T} {L : complat T} (A : Appx L) (p q : L^c) 
+  (Hp : stable_fixpoint A p)(Hq : reliable (pr11 A) q) :
+  q ≤ p ->  stable_revision' Hq ≺k pr1 p.
+Proof.
+  move => H.
+  move : (stabla_fixpoint_prudent A p Hp) => Hpr.
+  move : (stable_monotonicity Hq Hpr H) => H0.
+  simpl in H0.
+  apply prod_dest in H0. simpl in H0.
+  induction H0 as [H1 H2].
+  induction p as [[c d] Hcd].
+  induction Hp as [Hr [Hc Hd]].
+  unfold stable_revision, pr1, pr2 in Hc,Hd.
+  move : (propproperty (reliable (pr11 A) ((c,, d),, Hcd)) Hr (pr1 Hpr)) => [E _].
+  rewrite E in Hc, Hd; clear E.
+  unfold stable_revision'.
+  simpl.    
+  apply two_arg_paths.
+  - rewrite Hc; auto.
+  - rewrite Hd; auto.
+Qed.
+
+
+
+
+
+Definition prudent_chain {T} {L : complat T} (A : Appx L) :=
+  ∑ (I : UU) (f : I -> L^c), isdirected f × (∏ i : I, prudent A (f i)).
+
+Section prudent_chain_lub_prudent.
+
+Variable T : hSet.
+Variable L : complat T.
+Variable A : Appx L.
+Variable C : prudent_chain A.
+Notation I := (pr1 C).
+Notation f := (pr12 C).
+Notation Hdr := (pr122 C).
+Notation Hpr := (pr222 C).
+Notation X := (make_dcpo_lub Hdr).
+Notation asup := (pr11 X).
+Notation binf := (pr21 X).
+
+Local Lemma fi_X :
+  forall i, f i ≤ X.
+Proof.  
+  move => i.
+  induction (f i) as [[a b] Hab] eqn:E.
+  simpl.
+  apply two_arg_paths.
+  * apply is_upb.
+    unfold In.
+    move => P; apply; clear P.
+    exists b.
+    move => P; apply; clear P.
+    exists i; rewrite E; auto.
+  * rewrite joinC. apply meet_join.
+    apply is_lowb.
+    unfold In.
+    move => P; apply; clear P.
+    exists a.
+    move => P; apply; clear P.
+    exists i; rewrite E; auto.
+Qed.
+
+Lemma prudent_chain_lub_reliable :
+  reliable (pr11 A) X.
+Proof.
+  assert (forall i, reliable (pr11 A) (f i)) as Hr. {
+    move => i; move : (Hpr i) => [Hr]; auto.
+  }
+  unfold reliable in *.
+  move : fi_X => fi_X.
+  unfold reliable in *.
+  assert (forall i, (pr11 A) (f i) ≤ (pr11 A) X) as HX'. {
+    move => i.
+    apply (pr121 A).
+    auto.
+  }
+  simpl.
+  apply two_arg_paths.
+  * apply is_sup => x.
+    unfold In => Hx.
+    unfold ishinh, ishinh_UU in Hx.
+    apply Hx => [[y Hy]].
+    apply Hy => [[i Hi]].    
+    apply transL with  (pr11 ((pr11 A) (f i))); eauto.
+    * move : (Hr i) => Hf.
+      induction (f i) as [[n m] Hnm].
+      simpl in Hi.
+      apply prod_dest in Hi.
+      simpl in Hi.
+      induction Hi as [H1 H2].
+      induction H1, H2.
+      simpl in Hf.
+      apply prod_dest in Hf.
+      simpl in Hf.
+      induction Hf; auto.
+    * move : (HX' i) => Hi'.
+      simpl in Hi'.
+      apply prod_dest in Hi'.
+      simpl in Hi'.
+      induction Hi' as [H1 H2]; auto.
+  * rewrite joinC. apply meet_join.
+    apply is_inf => x.    
+    unfold In => Hx.
+    unfold ishinh, ishinh_UU in Hx.
+    apply Hx => [[y Hy]].
+    apply Hy => [[i Hi]].
+    apply transL with  (pr21 ((pr11 A) (f i))); eauto.
+    * move : (HX' i) => Hi'.
+      apply meet_join; rewrite joinC.
+      simpl in Hi'.
+      apply prod_dest in Hi'.
+      simpl in Hi'.
+      induction Hi' as [H1 H2]; auto.
+    * move : (Hr i) => Hf.
+      apply meet_join; rewrite joinC.
+      induction (f i) as [[n m] Hnm].
+      simpl in Hi.
+      apply prod_dest in Hi.
+      simpl in Hi.
+      induction Hi as [H1 H2].
+      induction H1, H2.
+      simpl in Hf.
+      apply prod_dest in Hf.
+      simpl in Hf.
+      induction Hf; auto.
+Qed. 
+
+
+Local Lemma x_fi i (x : L) (Hx : x ≺ binf) :
+  x ≺ pr21 (f i).
+Proof.
+  move : (fi_X i) => HX.
+  simpl in HX.
+  apply prod_dest in HX.
+  simpl in HX.
+  induction HX as [H1 H2].
+  rewrite joinC in H2.
+  apply meet_join in H2.
+  eapply transL; eauto.
+Qed.
+
+
+Local Lemma Afi_Afibinf (i : I) (x : L) (Hx : x ≺ binf) :
+  (pr11 ((pr11 A) (((x,, pr21 (f i)),, x_fi i Hx) ))  : L ) ≺ (pr11 ((pr11 A) ((x,, binf),, Hx))).
+Proof.
+  suff :
+    ((pr11 A) ((x,, pr21 (f i)),, x_fi i Hx))
+    ≤
+    ((pr11 A) ((x,, binf),, Hx)).
+  { move /base_paths; auto. }
+  apply (pr121 A).
+  simpl.
+  (* induction (f i) as [[x y] Hxy] eqn:E; simpl. *)
+  apply two_arg_paths.
+  { apply meetI. }
+  rewrite joinC; apply meet_join.
+  apply is_lowb.
+  unfold In => P; apply; clear P.
+  exists (pr11 (f i)) => P; apply; clear P .
+  exists i.
+  auto.
+Qed.
+
+Local Lemma binf_prefix (i : I) (x : L) (Hx : x ≺ binf) :
+  (pr11 ((pr11 A) ((x,, binf),, Hx)): L) ≺ binf.
+Proof.
+  move : prudent_chain_lub_reliable.
+  unfold reliable => H.
+  simpl in H; apply prod_dest in H; unfold pr1,pr2 in H; induction H as [H1 H2].
+  rewrite joinC in H2; apply meet_join in H2.
+  apply transL with ((pr21 ((pr11 A) X))); auto.
+  assert (X ≤ ((binf,,binf),, meetI binf : L^c)) as HX. {
+    simpl. apply two_arg_paths; first last.
+    { apply joinI. }
+    move : (pr2 X); auto.
+  }  
+  move : ((pr121 A) _ _ HX) => HXX.  
+  simpl in HXX.
+  apply prod_dest in HXX. simpl in HXX. induction HXX as [h1 h2].  
+  rewrite joinC in h2. apply meet_join in h2.
+  eapply transL; first last.
+  { apply h2. }
+  move : (pr2 A binf).
+  unfold exact_pair => <-.  
+  suff : 
+    ((pr11 A) ((x,, binf),, Hx))
+    ≤
+    ((pr11 A) ((binf,, binf),, meetI binf)).
+  { move /base_paths; auto. }
+  apply (pr121 A); simpl.
+  apply two_arg_paths; first last; auto.
+  apply joinI. 
+Qed.
+
  
+Local Definition x' i (x : L) (Hx : x ≺ binf)  : down_restriction lem (f i).
+Proof.
+  split with x. split.
+  apply bot_min.
+  move : (fi_X i) => H0.
+  simpl in H0.
+  apply prod_dest in H0.
+  simpl in H0.
+  induction H0 as [H1 H2].
+  rewrite joinC in H2.
+  apply meet_join in H2.
+  eapply transL; eauto.
+Defined.
+
+Local Lemma pre_pre (i : I) x :
+  A1 X A prudent_chain_lub_reliable x ≺ x ->
+  (pr1 (lfp (A1 (f i) A (pr1 (Hpr i))) (monoA1 (f i) A (pr1 (Hpr i))))) ≺ pr1 x.
+Proof.
+  move => H.
+  induction x as [x [Hb Ht]].
+  unfold pr1.
+  suff :
+    (lfp (A1 (f i) A (pr1 (Hpr i))) (monoA1 (f i) A (pr1 (Hpr i)))) ≺ x' i Ht.
+  { move /base_paths; auto. }  
+  apply lfp_prefixpoint.  
+  unfold A1.  
+  change  (pr1 (x' i Ht)) with x.
+  apply subtypePath; auto.
+  apply isPredicate_interval.
+  unfold pr1. 
+  eapply transL; unfold pr1.
+  - move : (propproperty (x ≺ pr21 (f i)) (x_fi i Ht) (pr22 (x' i Ht))) => [E _].
+    move : (Afi_Afibinf i Ht).
+    rewrite E. apply.
+  - change (pr1 (x' i Ht)) with x.
+    apply base_paths in H.
+    simpl in H.
+    eapply transL; first last.
+    { apply H. }
+    apply meetI.
+Qed.
+
+  
+Lemma prudent_chain_lub_prudent :
+  prudent A X.
+Proof.
+  unfold prudent.
+  exists prudent_chain_lub_reliable.
+  apply is_sup => x.
+  unfold In, ishinh, ishinh_UU.
+  apply => [[y]].
+  apply => [[i Hi]].
+  induction (f i) as [[x_ y_] xy] eqn:E.
+  simpl in Hi.
+  apply prod_dest in Hi. simpl in Hi. induction Hi as [Hx_ Hy_].
+  induction Hx_, Hy_.
+  eapply transL.
+  { move : (pr2 (Hpr i)).
+    replace (pr11 (f i)) with x.
+    apply.
+    rewrite E; auto.
+  }
+  move : (tarski_lfp _ _ (A1 X A prudent_chain_lub_reliable) (monoA1 X A prudent_chain_lub_reliable)) => [Hfp Hflp].
+  eapply pre_pre.
+  unfold dlfp.
+  rewrite Hfp.
+  apply meetI.
+Qed.
+
+End prudent_chain_lub_prudent.
+
+
+Section well_founded_fixpoint.
+
+(* Lemma isaprop_prudent {T} {L : complat T} (A : Appx L) (p : L^c) : isaprop (prudent A p).
+Proof.
+  unfold prudent.
+  apply isaprop_total2.
+Qed.
+
+Definition prudents {T} (L : complat T) (A : Appx L) : {set : L^c} :=
+  fun l => prudent A l,, (isaprop_prudent (A := A) (p := l)). *)
+
+Definition prudents {T} (L : complat T) (A : Appx L) : Type :=
+  ∑ l : L^c, prudent A l.
+Definition prudents2Lc {T} {L : complat T} (A : Appx L) : prudents A -> L^c := pr1.
+Coercion prudents2Lc : prudents >-> pr1hSet.
+
+Lemma isaset_prudents {T} (L : complat T) (A : Appx L) : isaset (prudents A).
+Proof.
+  unfold consistents.
+  apply isaset_total2.
+  - exact (setproperty (L^c)).
+  - move => p. 
+    apply isasetaprop.
+    unfold prudent.
+    apply isaprop_total2.
+Qed.
+
+
+Definition Lcp_hSet {T} (L : complat T) (A : Appx L): hSet := make_hSet (prudents A) (isaset_prudents (A := A)).
+
+
+Definition dcpoLcp {T} (L : complat T) (A : Appx L): dcpowithbottom.
+Proof.
+  set l := (dcpowithbottom_dcpo (L^c)).
+  move : (pr2 l) => Hl.
+  unfold isdirectedcomplete in Hl.
+
+  set X := (pr11 l).
+  set R := (pr121 l).
+  set H := pr221 l.
+  set Ht := pr11 H.
+  set Hr := pr21 H. unfold pr1, pr2 in Hr.
+  set Ha := pr2 H. unfold pr1, pr2 in Ha.
+  simpl in X. simpl in R.  
+  (* move : (pr1 l) => [X [R [[Hr Ht] Ha]]].   *)
+  unfold dcpowithbottom.
+  use tpair. use tpair. use tpair.
+  - exact (Lcp_hSet A).  
+  use tpair.
+  - move => [x Hx] [y Hy].
+    exact (R x y).    
+  use tpair.
+  use tpair.
+  - unfold istrans, R.
+    move => [x Hx] [y Hy] [z Hz] xy yz.
+    eapply Ht; eauto.
+  - unfold isrefl, R => [[x Hx]].
+    eapply Hr.
+  - unfold isantisymm, R => [[x Hx] [y Hy]] xy yx.
+    apply subtypePath => /=.
+    { move => a; apply isaprop_total2. }
+    apply Ha; auto. 
+  2 : {
+    simpl.
+    use tpair. use tpair.
+    { exact (dcpowithbottom_bottom (L^c)). }
+    { unfold prudent, dcpowithbottom_bottom; simpl.
+      use tpair.
+      * apply two_arg_paths.
+        + apply bot_min.
+        + rewrite joinC; apply meet_join; apply top_max.
+      * simpl. apply bot_min.
+    } 
+    { unfold isMinimal => /= y.
+      apply two_arg_paths.
+      * apply bot_min.
+      * rewrite joinC; apply meet_join; apply top_max.      
+    }  
+  } 
+  - unfold isdirectedcomplete => /=.
+    move => I f H0.
+    set g : I -> pr1 l := fun x => f x.
+    assert (isdirected g) as Hg. {
+      inversion H0 as [H1 H2].
+      unfold g, isdirected; split; auto.
+    }
+    assert (forall i, prudent A (g i)). {
+      move => i. exact (pr2 (f i)).
+    }
+    set C : prudent_chain A := (I,, g,, Hg,, X0).
+    use tpair. use tpair.
+    exact (make_dcpo_lub Hg).
+    - simpl.
+      apply (prudent_chain_lub_prudent C).
+    - simpl.
+      unfold islub; split.
+      * unfold isupperbound => i.
+        simpl.
+        induction (f i) as [[[x y] Hxy] Hc] eqn:E.
+        simpl.
+        apply two_arg_paths.
+        + apply is_upb.
+          unfold In => P; apply; clear P.
+          exists y => P; apply; clear P.
+          exists i. unfold g. rewrite E; auto.
+        + rewrite joinC; apply meet_join.
+          apply is_lowb.
+          unfold In => P; apply; clear P.
+          exists x => P; apply; clear P.
+          exists i. unfold g. rewrite E; auto.
+      * simpl.
+        move => [[[x y] Hxy] Hp] Hy /=.
+        apply two_arg_paths.
+        + apply is_sup => b.
+          unfold In => Hb.
+          unfold ishinh, ishinh_UU in Hb.
+          apply Hb => [[z Hz]].
+          apply Hz => [[i Hi]].
+          unfold g in Hi.
+          move : (Hy i) => fi.
+          induction (f i) as [[[n m] nm] Hnm].
+          simpl in fi, Hi.
+          apply prod_dest in Hi, fi.
+          simpl in Hi, fi.
+          induction Hi as [Hi1 Hi2]. 
+          induction fi as [fi1 fi2].
+          induction Hi1, Hi2; auto.
+        + rewrite joinC; apply meet_join.
+          apply is_inf => b.
+          unfold In => Hb.
+          unfold ishinh, ishinh_UU in Hb.
+          apply Hb => [[z Hz]].
+          apply Hz => [[i Hi]].
+          unfold g in Hi.
+          move : (Hy i) => fi.
+          induction (f i) as [[[n m] nm] Hnm].
+          simpl in fi, Hi.
+          apply prod_dest in Hi, fi.
+          simpl in Hi, fi.
+          induction Hi as [Hi1 Hi2]. 
+          induction fi as [fi1 fi2].
+          induction Hi1, Hi2.
+          apply meet_join; rewrite joinC; auto.
+Defined. 
+
+
+
+Variable T : hSet.
+Variable L : complat T.
+Variable A : Appx L.
+
+Definition well_founded_chain'' : dcpoLcp A -> dcpoLcp A.
+  (* (∑ l : L^c, prudent A l) -> (∑ l : L^c, prudent A l). *)
+Proof.
+  move => [l Hl].
+  exists ((stable_revision' (pr1 Hl)),, (stable_consistent T L A _ Hl)).
+  unfold stable_revision', stable_revision, pr1, pr2.
+  exact (stable_prudent T L A _ Hl).
+Defined.
+
+Lemma well_founded_chain_pricise x :
+  x ≤ well_founded_chain'' x.
+Proof.
+  unfold well_founded_chain'', stable_revision', stable_revision, pr1,pr2.
+  apply stable_pricise.
+Qed.
+
+
+
+Definition well_founded_chain' (n : nat) : dcpoLcp A.
+Proof.
+  induction n as [|n IHn].
+  - exists ((⊥ ,,⊤),, bot_min _ _ ⊤).
+    unfold prudent. 
+    use tpair.
+    - unfold reliable.
+      simpl.
+      apply two_arg_paths.
+      * apply bot_min.
+      * rewrite joinC; apply meet_join; apply top_max.  
+    - simpl.
+      apply bot_min.
+  - exact (well_founded_chain'' IHn).
+Defined.
+
+Definition well_founded_chain n :=  (well_founded_chain' n).
+
+
+
+Lemma well_founded_chain_S n: 
+  well_founded_chain n ≤ well_founded_chain (S n).
+Proof.
+  unfold well_founded_chain.
+  set x := well_founded_chain' n.
+  unfold well_founded_chain'.
+  change (well_founded_chain' n) with x.
+  apply (stable_pricise T L A (pr1 x) (pr2 x)).
+Qed.
+
+Lemma S_le (n m : nat) :
+  (S n ≤ m)%nat -> (n ≤ m)%nat.
+Proof.
+  move => H.
+  replace n with (S n - 1).
+  apply natlehtolehm1; auto.
+  simpl.
+  rewrite natminuseqn; auto.
+Qed.
+
+Lemma le_ex_plus (n m : nat) :
+  (n ≤ m)%nat -> ∑ k : nat, m = n +k.
+Proof.
+  move : n.
+  induction m => n H /=.
+  * destruct n.
+    - exists 0; auto.
+    - inversion H.
+  * destruct n.
+    - exists (S m); auto.
+    - assert (n ≤ m)%nat. {
+        destruct n; auto.
+      }
+      move : (IHm n X) => [k Hk].
+      rewrite Hk; simpl.
+      exists k; auto.
+Qed.  
+
+Lemma well_founded_chain_le (n m : nat) :
+  (n ≤ m)%nat -> well_founded_chain n ≤ well_founded_chain m.
+Proof.
+  move /le_ex_plus => [k] ->.
+  induction k; auto.
+  - rewrite natplusr0; auto.
+    apply isrefl_posetRelation.
+  - rewrite natplusnsm.
+    apply istrans_posetRelation with (well_founded_chain (n + k)); auto.
+    apply well_founded_chain_S.
+Qed.    
+
+
+Lemma well_founded_chain_isdirected : 
+  isdirected well_founded_chain.
+Proof.
+  unfold isdirected; split.
+  { move => P; apply. exact 0. }
+  move => n m.
+  move => P; apply; clear P.
+  exists (n + m); split; apply well_founded_chain_le.
+  apply natlehnplusnm.
+  apply natlehmplusnm.
+Qed.
+
+
+
+
+(* Definition well_founded_prudent_chain : prudent_chain A.
+Proof.
+  exists nat.
+  exists  (fun n => pr1 (well_founded_chain n)).
+  split.
+  - apply well_founded_chain_isdirected.
+  - move => i.
+    unfold well_founded_chain.
+    set C := (well_founded_chain' i).
+    induction C as [l Hl]; auto.
+Defined. *)
+Lemma  isaposetmorphism_well_founded_chain :
+  isaposetmorphism well_founded_chain''.
+Proof.  
+  { unfold isaposetmorphism => [[[[x1 x2] Hcx] Hpx] [[[y1 y2] Hcy] Hpy]] H.
+    simpl in H.
+    apply prod_dest in H; simpl in H; induction H as [H1 H2].
+    unfold well_founded_chain'', stable_revision', stable_revision, pr1, pr2.
+    eapply stable_monotonicity; simpl.  
+    apply two_arg_paths; auto.
+  }
+Qed.  
+
+Lemma well_founded_chain_step_isdirected I (f : I -> dcpoLcp A) (Hf : isdirected f) :
+  isdirected (well_founded_chain'' ∘ f).
+Proof.  
+  induction Hf as [HI Hf].
+  split; auto.
+  unfold funcomp => i j.
+  move : (Hf i j) => Hij.
+  unfold ishinh, ishinh_UU in Hij.
+  apply Hij => [[k [Hi Hj]]].
+  move => P; apply; clear P.
+  exists k; split; apply isaposetmorphism_well_founded_chain; auto.
+Qed. 
+
+
+(* Print directed_index. *)
+(* Print Directed_family. *)
+
+
+
+Lemma well_founded_chain_continuous I (f : I -> dcpoLcp A) (Hf : isdirected f) :
+  well_founded_chain'' (make_dcpo_lub Hf) = make_dcpo_lub (well_founded_chain_step_isdirected Hf).
+Proof.
+  move : (make_dcpo_lub_islub Hf) => [fu flub].
+  move : (make_dcpo_lub_islub (well_founded_chain_step_isdirected Hf)) => [gu glub].
+  unfold isupperbound in *.  
+  apply isantisymm_posetRelation; first last.
+  - apply glub => i.
+    unfold funcomp.
+    apply isaposetmorphism_well_founded_chain; auto.
+  - set v := well_founded_chain'' (make_dcpo_lub Hf).
+    set w := make_dcpo_lub (well_founded_chain_step_isdirected Hf).
+    Locate "≤"   .
+    (* unfold well_founded_chain'', stable_revision', stable_revision, pr1, pr2. *)
+    simpl.
+    unfold stable_revision', stable_revision, pr1, pr2.
+    set a := pr1 (dlfp (pr1 (make_dcpo_lub Hf)) A (pr12 (make_dcpo_lub Hf))).
+    set b := pr1 (ulfp (pr1 (make_dcpo_lub Hf)) A (pr12 (make_dcpo_lub Hf))).        
+    set x := (sup (λ x : L, ∃ y : T, ishinh_UU (∑ i : I, x,, y = pr1 (dlfp (pr1 (f i)) A (pr12 (f i))),, pr1 (ulfp (pr1 (f i)) A (pr12 (f i)))))).
+    set y := (inf(λ y : L,∃ x0 : T,ishinh_UU (∑ i : I, x0,, y =  pr1 (dlfp (pr1 (f i)) A (pr12 (f i))),, pr1 (ulfp (pr1 (f i)) A (pr12 (f i)))))).
+    assert (x ≺ pr211 (make_dcpo_lub Hf)). {
+      simpl.
+      apply is_inf => c.
+      unfold In => Hc.
+      unfold ishinh, ishinh_UU in Hc.
+      apply Hc => [[d Hd]].
+      apply Hd => [[i Hi]].       
+      move : (fu i).
+      induction (f i) as [[[c_ d_] cd_] cd]; apply prod_dest in Hi.
+      simpl in Hi. induction Hi as [H1 H2]. induction H1. induction H2.
+      move => H0. simpl in H0.
+      apply prod_dest in H0. induction H0 as [_ H0]. simpl in H0.
+      rewrite joinC in H0. apply meet_join in H0.
+      unfold a.
+      rewrite <- Hi.
+      
+      Search "sup".
+    }
+    assert (down_restriction lem (pr1 (make_dcpo_lub Hf))). {
+      split with x; split.
+      - apply bot_min.
+      - 
+    }
+
+    unfold stable_revision', stable_revision, pr1, pr2.
+    apply two_arg_paths.
+    * apply is_upb.
+      unfold In => P; apply; clear P.
+      simpl.
+    
+
+Admitted.  
+
+
+Definition well_founded_mono : dcpoLcp A --> dcpoLcp A.
+Proof.
+  split with (well_founded_chain'').
+  unfold isdcpomorphism.
+  split; auto.
+  - apply isaposetmorphism_well_founded_chain.
+  - move => I f Hf.
+    unfold preserveslub => v Hv.    
+    unfold islub, isupperbound in *.
+    induction Hv as [Hu Hs].
+    unfold funcomp.
+    split.
+    - move => i.
+      apply isaposetmorphism_well_founded_chain; auto.
+    - move => y Hy.         
+      set w := (make_dcpo_lub (well_founded_chain_step_isdirected Hf)).
+      set Hw := (make_dcpo_lub_islub (well_founded_chain_step_isdirected Hf)).
+      induction Hw as [Hw1 Hw2].
+
+      unfold isupperbound in Hw1.
+      
+      unfold funcomp in *.
+      change (make_dcpo_lub (well_founded_chain_step_isdirected Hf)) with w in Hw1, Hw2.
+      apply istrans_posetRelation with w; first last.
+      - apply (Hw2 y Hy).
+        apply istrans_posetRelation with (well_founded_chain'' (make_dcpo_lub Hf)); first last.
+      - rewrite (well_founded_chain_continuous Hf).
+        apply isrefl_posetRelation.
+      - apply isaposetmorphism_well_founded_chain.
+        apply Hs => i.
+        move : (make_dcpo_lub_islub Hf) => [H1 H2].
+        apply H1.
+Defined.
+          
+          
+
+
+
+
+
+
+         
+          
+
+
+
+
+          
+          
+     
+
+
+
+     
+      
+      
+
+    
+
+
+     
+Admitted.
+
+Definition well_founded_prudent_chain : prudent_chain A.
+Proof.
+  exists nat.
+  exists  (fun n => pr1 (pointwisefamily iter' well_founded_mono n)).
+  split.
+  - apply (pointwisefamily_isdirected iter' (iter'_isdirected (dcpoLcp A)) well_founded_mono).
+  - move => i.
+    unfold pointwisefamily.
+    unfold iter', make_dcpomorphism; simpl.
+    induction i => /=.
+    * unfold dcpowithbottom_bottom, prudent; simpl.
+      use tpair.
+      + apply two_arg_paths.
+        -- apply bot_min.
+        -- rewrite joinC; apply meet_join; apply top_max.
+      + apply bot_min.
+    * replace (pr1 well_founded_mono)  with (well_founded_chain'') by admit.
+
+      unfold well_founded_chain'', stable_revision', stable_revision, pr1, pr2.
+      apply stable_prudent.
+Admitted.
+
+
+Definition X := (make_dcpo_lub well_founded_chain_isdirected).
+
+
+ (* Lemma well_founded_stable_fixpoint' :
+  well_founded_chain'' X = X.
+Proof.
+  move : (leastfixedpoint_isfixedpoint well_founded_mono) => H.
+  replace (pr1 well_founded_mono) with well_founded_chain'' in H.
+  auto.
+  admit.
+Admitted.
+   *)
+  
+Lemma well_founded_stable_fixpoint :
+  stable_fixpoint A (pr1 X).
+Proof.  
+  unfold stable_fixpoint. 
+  move : (prudent_chain_lub_prudent well_founded_prudent_chain) => [Hr _].
+  
+  use tpair.
+  { admit.  }
+ 
+
+ 
+
+
