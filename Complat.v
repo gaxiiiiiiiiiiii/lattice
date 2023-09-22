@@ -394,3 +394,27 @@ Section complatTheory.
   Qed.
 
 End complatTheory.
+
+Lemma prefix_inverse_lfp_order (T : hSet) (L : complat T) (f g : L -> L) (Hf : mono f) (Hg : mono g ) :
+  (∏ x, f x ≺ x -> g x ≺ x) -> lfp g Hg ≺ lfp f Hf.
+Proof.
+  move => H.
+  apply lfp_prefixpoint.
+  apply H.
+  set y := f (lfp f Hf).
+  move : (tarski_lfp _ _ f Hf) => [E _].
+  rewrite <- E; unfold y.
+  apply reflL.
+Qed.
+
+Lemma postfix_preseve_gfp_order  (T : hSet) (L : complat T) (f g : L -> L) (Hf : mono f) (Hg : mono  g) :
+  (∏ x, x ≺ f x -> x ≺ g x) -> gfp f Hf ≺ gfp g Hg.
+Proof.
+  move => H.
+  apply gfp_postfixpoint.
+  apply H.
+  set y := f (gfp f Hf).
+  move : (tarski_gfp _ _ f Hf) => [E _].
+  rewrite <- E; unfold y.
+  apply reflL.
+Qed.  
