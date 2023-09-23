@@ -105,7 +105,7 @@ Qed.
 Definition pataraia (X : dcppo) (f : monotone_function X X) : X :=
   pr1 (pataraia_fixpoint (restrict_to_smallest f)).
 
-Lemma patarais_is_fixpoint (X : dcppo) (f : monotone_function X X) :
+Lemma pataraia_is_fixpoint (X : dcppo) (f : monotone_function X X) :
   f (pataraia f) = pataraia f.
 Proof.
   unfold pataraia.
