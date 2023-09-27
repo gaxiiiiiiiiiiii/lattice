@@ -1,4 +1,4 @@
-(* based on 'mations, stable operators and the well-jounded jixpoint' *)
+(* based on 'approximations, stable operators and the well-founded fixpoint' *)
 
 Require Export ProdBilattice.
 
@@ -822,7 +822,7 @@ Qed.
 
 Lemma trivial_lfp_exact {T} (L : complat T) (O : L -> L) (HO : mono O) :
   @exact _ L (lfp (trivial O) (klemono_trivial HO)).
-Proof.
+Proof.    
   (*帰納法を実装しないとできないかも*)
 Abort.  
 

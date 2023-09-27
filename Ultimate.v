@@ -10,7 +10,6 @@ Require Import UniMath.OrderTheory.DCPOs.Examples.Products.
 Require Import UniMath.OrderTheory.DCPOs.Examples.SubDCPO.
 Require Import UniMath.OrderTheory.DCPOs.FixpointTheorems.Pataraia.
 
-
 Open Scope dcpo.
 (* Open Scope poset. *)
 
@@ -423,7 +422,7 @@ Notation "X --> Y" := (monotone_function X Y).
 Definition  exact_pair {T} {L : complat T} (x : L) : L^c := (x,,x),, (meetI x).
 
 Definition partialApproximating {T} {L : complat T} (f : L^c --> L^c) :=
-  forall x : L, pr11 (f (exact_pair x)) = pr21 (f (exact_pair x)).
+  forall x : L, pr11 (f (exact_pair x)) == pr21 (f (exact_pair x)).
 
 Definition Appx {T} (L : complat T) : UU :=
   ∑ f : L^c --> L^c, partialApproximating f.
@@ -433,12 +432,13 @@ Definition kripke_kleene {T} {L : complat T} (f : L^c --> L^c) (Hf : partialAppr
   : L^c := pataraia f.
 
 Definition partialApproximate {T} {L : complat T} (A : Appx L) (O : L -> L) :=
-  forall x, pr11 A (exact_pair x) = (exact_pair (O x)).
+  forall x, pr11 A (exact_pair x) == (exact_pair (O x)).
 
 Definition AppxOf {T} {L : complat T} (O : L -> L) :=
   ∑ A : Appx L, partialApproximate A O.
 
 
+  
 Lemma Appxof_fixpoint {T} {L : complat T} (O : L -> L) :
   forall (A : AppxOf O) (x : L), 
   pr111 A (exact_pair x) = (exact_pair x) <-> O x = x.
@@ -538,7 +538,7 @@ Proof.
 Qed.
 
 
-Section restriction.
+
 
 Hypotheses lem : LEM.
 
@@ -677,8 +677,9 @@ Proof.
   auto.
 Qed.  
 
+
 Definition stable_fixpoint_of {T} {L : complat T} (O : L -> L) (A : AppxOf O) (x : L) :=
-  (pr111 A) ((x,,x),, meetI x) = ((x,,x),, meetI x).
+  stable_fixpoint (pr1 A) (exact_pair x).
 
 
 Definition prudent {T} {L : complat T} (A : Appx L) (p : L^c) :=
@@ -727,7 +728,7 @@ Proof.
   move /base_paths; auto.
 Qed.
 
-Section ulfp_prefix.
+Section stable_consistent.
 
 Variable T : hSet.
 Variable L : complat T.
@@ -771,7 +772,7 @@ Qed.
 
 
   
-Lemma ac_prefix :
+Lemma ulfp_prefixpoint :
   A1 (H)  (a↑,, bot_min _ _ a↑,, au_b) ≺  (a↑,, bot_min _ _ a↑,, au_b).
 Proof.
   
@@ -795,14 +796,24 @@ Proof.
   move : (tarski_lfp _ _ (A2 (H)) (monoA2 (H))) => [Hfp _].
   apply base_paths in Hfp.    
   simpl in Hfp.
-  change (pr1 (lfp (A2 (H)) (monoA2 (H)))) with a↑ in Hfp.
+  (* change (pr1 (lfp (A2 (H)) (monoA2 (H)))) with a↑ in Hfp. *)
   move : (propproperty (a ≺ a↑)) => Hc.
   move : (Hc a_au ( pr12 (lfp (A2 (H)) (monoA2 (H))))) => [c hc].
   rewrite c Hfp.
   apply meetI.
 Qed.  
 
-End ulfp_prefix.
+
+Lemma stable_consistent :
+    @consistent T L (b↓,, a↑).
+Proof.
+  move : (lfp_prefixpoint _ _ (A1 H) (monoA1 H) _ ulfp_prefixpoint).
+  move /base_paths => H0; auto.
+Qed.
+
+
+
+End stable_consistent.
 
 
 Section prudent.
@@ -822,15 +833,10 @@ Notation "b↓" := (pr1 (dlfp (pr1 H))).
 Let au_b := (au_b (pr1 H)).
 Let a_au := (a_au (pr1 H)).
 Let bd_b := (bd_b (pr1 H)).
+Let stable_consistent := (stable_consistent (pr1 H)).
 
 
 
-Lemma stable_consistent :
-    @consistent T L (b↓,, a↑).
-Proof.
-  move : (lfp_prefixpoint _ _ (A1 (pr1 H)) (monoA1 (pr1 H)) _ (ac_prefix (pr1 H))).
-  move /base_paths => H0; auto.
-Qed.
 
 Lemma stable_pricise :
   p ≤ ((b↓,, a↑),, stable_consistent).
@@ -843,6 +849,8 @@ Proof.
   rewrite Hb.
   auto.
 Qed.  
+
+
 
 (* (b↓,b) ≤ (b↓,a↑) *)
 Local Lemma bdb_bdau :
@@ -873,7 +881,7 @@ Proof.
   - move : (tarski_lfp _ _ (A1 (pr1 H)) (monoA1 (pr1 H))) =>  [Hfp _].
     apply base_paths in Hfp.    
     simpl in Hfp.
-    change (pr1 (lfp (A1 (pr1 H)) (monoA1 (pr1 H)))) with b↓ in Hfp.
+    (* change (pr1 (lfp (A1 (pr1 H)) (monoA1 (pr1 H)))) with b↓ in Hfp. *)
     move : (propproperty (b↓ ≺ b)) => Hc.
     move : (Hc (pr22 (lfp (A1 (pr1 H)) (monoA1 (pr1 H)))) bd_b) => [E _].
     rewrite E in Hfp.
@@ -885,7 +893,7 @@ Proof.
   - move : (tarski_lfp _ _ (A2 (pr1 H)) (monoA2 (pr1 H))) =>  [Hfp _].
     apply base_paths in Hfp.    
     simpl in Hfp.
-    change (pr1 (lfp (A2 (pr1 H)) (monoA2 (pr1 H)))) with a↑ in Hfp.
+    (* change (pr1 (lfp (A2 (pr1 H)) (monoA2 (pr1 H)))) with a↑ in Hfp. *)
     move : (propproperty (a ≺ a↑)) => Hc.
     move : ((Hc (pr12 (lfp (A2 (pr1 H)) (monoA2 (pr1 H))))) a_au) => [E _].
     rewrite E in Hfp.
@@ -948,7 +956,6 @@ Proof.
   assert ((((b↓,, a↑),, stable_consistent) : L^c) ≤ ((a↑,, a↑),, meetI a↑)). {
     simpl.
     apply two_arg_paths; auto.
-    apply stable_consistent.
     apply joinI.
   }
   move : (pr21 A _ _ X) => H0.
@@ -968,12 +975,8 @@ Proof.
   apply joinI.
 Qed.  
 
-  
 
 
-
-
-(* move : (ac_prefix stable_reliable). *)
 
 Lemma stable_prudent :
   prudent A ((b↓,, a↑),, stable_consistent).
@@ -984,13 +987,13 @@ Proof.
   move : (tarski_lfp _ _ (A1 (pr1 H)) (monoA1 (pr1 H))) => [Hfp1 Hlfp1]; auto.
   apply base_paths in Hfp1.
   simpl in Hfp1.
-  change (pr1 (lfp (A1 (pr1 H)) (monoA1 (pr1 H)))) with b↓ in *.
+  (* change (pr1 (lfp (A1 (pr1 H)) (monoA1 (pr1 H)))) with b↓ in *. *)
 
   move : (tarski_lfp _ _  (A1  stable_reliable) (monoA1  stable_reliable)) => [Hfp2 Hlfp2].
   apply base_paths in Hfp2.
   simpl in Hfp2, H.
-  change (pr1 (lfp (A1 (pr1 H)) (monoA1 (pr1 H)))) with b↓ in *.
-  change (lfp (A1 stable_reliable) (monoA1 stable_reliable)) with (dlfp stable_reliable) in *.
+  (* change (pr1 (lfp (A1 (pr1 H)) (monoA1 (pr1 H)))) with b↓ in *. *)
+  (* change (lfp (A1 stable_reliable) (monoA1 stable_reliable)) with (dlfp stable_reliable) in *. *)
   
   move : (Axb_Axau stable_consistent) => Hbd.
   apply base_paths in Hbd. 
@@ -1121,7 +1124,7 @@ Proof.
   apply isPredicate_interval.
   move : (tarski_lfp _ _ (A1 Hr) (monoA1 Hr)) => [Hfp Hlfp]; auto.
   apply base_paths in Hfp.
-  change (pr1 (lfp (A1 Hr) (monoA1 Hr))) with d↓ in Hfp.
+  (* change (pr1 (lfp (A1 Hr) (monoA1 Hr))) with d↓ in Hfp. *)
   apply transL with (pr1 (A1 Hr (lfp (A1 Hr) (monoA1 Hr)))); first last.
   { rewrite Hfp. apply meetI. }
 
@@ -1207,7 +1210,7 @@ Proof.
     rewrite <- Hfp; clear Hfp.
     set x := (lfp (A2 Hp) (monoA2 Hp)).
     unfold A2, pr1, pr2, x.
-    change (pr1 (lfp (A2 Hp) (monoA2 Hp))) with a↑.
+    (* change (pr1 (lfp (A2 Hp) (monoA2 Hp))) with a↑. *)
     eapply transL with (pr21 ((pr11 A) ((u,,u),, meetI u))); first last.
     * suff : 
       ((pr11 A) ((a,, a↑),, pr12 (lfp (A2 Hp) (monoA2 Hp))))
@@ -1242,7 +1245,7 @@ Proof.
         * apply dd_d.
   - move : (tarski_lfp _ _ (A1 Hr) (monoA1 Hr)) => [Hfp _]; auto.
     apply base_paths in Hfp.
-    change (pr1 (lfp (A1 Hr) (monoA1 Hr))) with d↓ in Hfp.
+    (* change (pr1 (lfp (A1 Hr) (monoA1 Hr))) with d↓ in Hfp. *)
     apply transL with (pr1 (A1 Hr (lfp (A1 Hr) (monoA1 Hr)))); first last.
     { rewrite Hfp. apply meetI. }
     clear Hfp.
@@ -1283,7 +1286,7 @@ Proof.
   simpl.
   move : (tarski_lfp _ _ (A2 Hp) (monoA2 Hp)) => [Hfp _].
   apply base_paths in Hfp.
-  change (pr1 (lfp (A2 Hp) (monoA2 Hp))) with a↑ in Hfp.
+  (* change (pr1 (lfp (A2 Hp) (monoA2 Hp))) with a↑ in Hfp. *)
   apply transL with (pr1 (A2 Hp (lfp (A2 Hp) (monoA2 Hp)))); first last.
   { rewrite Hfp. apply meetI. }
   set x := (lfp (A2 Hp) (monoA2 Hp)).
@@ -1355,7 +1358,7 @@ Qed.
 
 Definition prudent_chain {T} {L : complat T} (A : Appx L) :=
   ∑ C : directed_set (L^c), (∏ i, prudent A (pr12 C i)).
-  (* ∑ (I : UU) (f : I -> L^c), is_directed (L^c) f × (∏ i : I, prudent A (f i)). *)
+
 
 Section prudent_chain_lub_prudent.
 
@@ -1563,7 +1566,7 @@ Proof.
   { move /base_paths; auto. }  
   apply lfp_prefixpoint.  
   unfold A1.  
-  change  (pr1 (x' i Ht)) with x.
+  (* change  (pr1 (x' i Ht)) with x. *)
   apply subtypePath; auto.
   apply isPredicate_interval.
   unfold pr1. 
@@ -1571,7 +1574,8 @@ Proof.
   - move : (propproperty (x ≺ pr21 (f i)) (x_fi i Ht) (pr22 (x' i Ht))) => [E _].
     move : (Afi_Afibinf i Ht).
     rewrite E. apply.
-  - change (pr1 (x' i Ht)) with x.
+  - 
+    (* change (pr1 (x' i Ht)) with x. *)
     apply base_paths in H.
     simpl in H.
     eapply transL; first last.
@@ -1656,26 +1660,19 @@ Variable L : complat T.
 Variable A : Appx L.
 
 Definition WF_iter : dcppoLcp A -> dcppoLcp A.
-  (* (∑ l : L^c, prudent A l) -> (∑ l : L^c, prudent A l). *)
 Proof.
   move => [l Hl].
-  exists ((stable_revision' (pr1 Hl)),, (stable_consistent Hl)).
+  exists ((stable_revision' (pr1 Hl)),, (stable_consistent (pr1 Hl))).
   unfold stable_revision', stable_revision, pr1, pr2.
   exact (stable_prudent Hl).
 Defined.
 
-Lemma well_founded_chain_pricise x :
-  x ≤ WF_iter x.
-Proof.
-  unfold WF_iter, stable_revision', stable_revision, pr1,pr2.
-  apply stable_pricise.
-Qed.
 
 Lemma WF_iter_mono :
   is_monotone (dcppoLcp A) (dcppoLcp A) WF_iter.
 Proof.
   move => x y H.
-  eapply stable_monotonicity; simpl; auto.  
+  eapply stable_monotonicity; simpl; auto. 
 Qed.
 
 Definition well_founded  : dcppoLcp A := pataraia (WF_iter,, WF_iter_mono).
@@ -1688,10 +1685,11 @@ Proof.
   - suff : prudent A (pr1 well_founded); auto.
     - move => [Hr _]; auto.
     - apply (pr2 well_founded).
-  - suff : (pr11 well_founded = (pr1 (dlfp (pr12 well_founded)),, pr1 (ulfp (pr12 well_founded)))). {
+  - 
+    suff : (pr11 well_founded = (pr1 (dlfp (pr12 well_founded)),, pr1 (ulfp (pr12 well_founded)))). {
       move /prod_dest; auto.
     }
-    move : (patarais_is_fixpoint (WF_iter,, WF_iter_mono)) => H.
+    move : (pataraia_is_fixpoint (WF_iter,, WF_iter_mono)) => H.
     apply base_paths in H.
     apply base_paths in H.
     unfold well_founded.
@@ -1701,12 +1699,496 @@ Qed.
 
 End well_founded_fixpoint.
 
-Check well_founded.
+
+
+Definition pointwise (T : hSet) (L : complat T) (A B : Appx L) :=
+ ∏ p, pr11 A p ≤ pr11 B p.
+
+Notation "A ⊏ B" := (pointwise A B)(at level 30).
+
+Lemma pointwise_isaprop (T : hSet) (L : complat T) (A B : Appx L) :
+  isaprop (A ⊏ B).
+Proof.
+  apply impred_isaprop => p.
+  apply (propproperty ((pr11 A) p ≤ (pr11 B) p)).
+Qed.
+
+Definition pointwise_hProp (T : hSet) (L : complat T) (A B : Appx L) : hProp :=
+  make_hProp (A ⊏ B) (pointwise_isaprop (A := A) (B := B)).
+
+
+Lemma pointwise_approximate T (L : complat T) (A B : Appx L) :
+  A ⊏ B -> ∃ O, partialApproximate A O × partialApproximate B O.
+Proof.
+Abort.
+
+Section pointwise_order_monotonic.
+
+Variable T : hSet.
+Variable L : complat T.
+Variable A B : Appx L.
+Hypotheses H : A ⊏ B.
+
+
+Lemma Aprudent_Breliable p :
+  prudent A p -> reliable (pr11 B) p.
+Proof.
+  move => [Hr Hp].
+  eapply trans_dcpo; eauto.
+Qed.
+
+
+Lemma Adlfp_Bdlfp (p : L^c) (HA : prudent A p) :
+  pr1 (dlfp (pr1 HA)) ≺ pr1 (dlfp (Aprudent_Breliable HA)).
+Proof.
+  suff :  (dlfp (pr1 HA)) ≺  (dlfp (Aprudent_Breliable HA)).
+  { move /base_paths; auto. }
+  apply prefix_inverse_lfp_order.
+  move => [x [Hb Ht]] Hx.
+  apply base_paths in Hx.
+  simpl in Hx.  
+  apply subtypePath => /=.
+  { apply isPredicate_interval. }
+  apply transL with (pr11 ((pr11 B) ((x,, pr21 p),, Ht))); auto.
+  move : (H ((x,, pr21 p),, Ht)) => H0.
+  simpl in H0.
+  apply prod_dest in H0. simpl in H0.
+  induction H0 as [H1 H2]; auto.
+Qed.
+
+Lemma Aulfp_Bulfp (p : L^c) (HA : prudent A p) :
+  pr1 (ulfp (Aprudent_Breliable HA)) ≺ pr1 (ulfp (pr1 HA)).
+Proof.
+  suff : (ulfp (Aprudent_Breliable HA)) ≺ (ulfp (pr1 HA)).
+  { move /base_paths; auto. }
+  apply prefix_inverse_lfp_order.
+  move => [x [Hb Ht]] Hx.
+  apply base_paths in Hx.
+  simpl in Hx.  
+  apply subtypePath => /=.
+  { apply isPredicate_interval. }
+  apply transL with (pr21 ((pr11 A) ((pr11 p,, x),, Hb))); auto.
+  move : (H ((pr11 p,, x),, Hb)) => H0.
+  simpl in H0.
+  apply prod_dest in H0. simpl in H0.
+  induction H0 as [H1 H2].
+  apply meet_join. rewrite joinC; auto.
+Qed.
+
+Lemma Aprudent_Bprudent (p : L^c) :
+  prudent A p -> prudent B p.
+Proof.
+  move => HA.
+  exists (Aprudent_Breliable HA).
+  eapply transL; first last.
+  - apply Adlfp_Bdlfp.
+  - apply (pr2 HA) .
+Qed.
+
+Lemma pointwise_preserve_stable p (HA : prudent A p) :
+  stable_revision' (pr1 HA) ≺k stable_revision' (Aprudent_Breliable HA).
+Proof.
+  unfold stable_revision', stable_revision, pr1, pr2 => /=.
+  apply two_arg_paths.
+  - apply Adlfp_Bdlfp.
+  - rewrite joinC; apply meet_join.
+    apply Aulfp_Bulfp.
+Qed.
+
+End pointwise_order_monotonic.
 
 
 
-    
 
+
+Lemma pataraia_induction (X : dcppo) (f : X --> X) P:
+  is_closed f P -> P (pataraia f).
+Proof.
+  move => HP.
+  eapply smallest_included_in_closed; eauto.
+  set x :=  (pataraia f).
+  apply (pr2 (pataraia_fixpoint (restrict_to_smallest f))).
+Qed.  
+
+
+
+Section pointwise_preserve.
+
+Variable T : hSet.
+Variable L : complat T.
+Variable O : L -> L.
+Variable A B : AppxOf O.
+Hypotheses H : (pr1 A) ⊏ (pr1 B).
+
+
+
+Lemma pointwise_preserve_KK :
+  kripke_kleene (pr21 A) ≤ kripke_kleene (pr21 B).
+Proof.  
+  unfold kripke_kleene.
+  set P := fun x => x ≤ pataraia (pr11 B).
+  apply (pataraia_induction (f := pr11 A) (P := P)).
+  unfold P; clear P.
+  repeat split.
+  - apply is_min_bottom_dcppo.
+  - move => x Hx.
+    rewrite <- (pataraia_is_fixpoint (pr11 B)).
+    eapply trans_dcpo.
+    * apply (pr211 A) in Hx.
+      apply Hx.
+    * apply H.
+  - move => D HD.
+    apply dcpo_lub_is_least; auto.
+Qed.    
  
+Lemma pointwise_preserve_WF :
+  pr1 (well_founded (pr1 A)) ≤ pr1 (well_founded (pr1 B)).
+Proof.
+  unfold well_founded.  
+  set P := fun x : dcppoLcp (pr1 A) => pr1 x ≤ pr1 (pataraia (WF_iter (A:=pr1 B),, WF_iter_mono (A:=pr1 B))).
+  apply (pataraia_induction (f := WF_iter (A:=pr1 A),, WF_iter_mono (A:=pr1 A)) (P := P)).
+  unfold P; clear P.
+  repeat split.
+  - apply is_min_bottom_dcppo.
+  - move => x Hx.    
+    rewrite <- (pataraia_is_fixpoint (WF_iter (A:=pr1 B),, WF_iter_mono (A:=pr1 B))).
+    unfold monotone_function_to_function, pr1.
+    set X := pr1 (WF_iter (pataraia (WF_iter (A:=pr1 B),, WF_iter_mono (A:=pr1 B)))).
+    unfold WF_iter, X; clear X.
+    move : (pointwise_preserve_stable H (pr2 x)).
+    set Y := (pataraia (WF_iter (A:=pr1 B),, WF_iter_mono (A:=pr1 B))).
+    unfold monotone_function_to_function, pr1, WF_iter => Hy.
+    move : (stable_monotonicity (Aprudent_Breliable H (pr2 x)) (pr2 Y) Hx) => H1.
+    suff : (stable_revision' (pr12 x) ≺k stable_revision' (pr12 Y)); auto.
+    unfold stable_revision', stable_revision, pr1, pr2 in *.
+    apply transL with ((pr1 (dlfp (Aprudent_Breliable H (pr2 x))),, pr1 (ulfp (Aprudent_Breliable H (pr2 x))))); auto.
+  - move => D HD.
+    apply dcpo_lub_is_least; auto.
+Qed.
+
+Lemma pointwise_preserve_exact_fixpoint x :
+  (pr111 A) (exact_pair x) = (exact_pair x) -> (pr111 B) (exact_pair x) = (exact_pair x).
+Proof.
+  move => H0.
+  move : (pr2 A x) => HA.
+  move : (pr2 B x) => HB.
+  rewrite  HB. rewrite <- H0, HA; auto.
+Qed.
+
+Lemma pointwise_preserve_exact_stable_fixpoint x :
+  stable_fixpoint_of A x  -> stable_fixpoint (pr1 B) (exact_pair x).
+Proof.
+  unfold stable_fixpoint_of.
+  move => H0.
+  move : (stable_fixpoint_prudent H0) => HAp.
+  move : H0.
+  unfold stable_fixpoint, exact_pair, stable_revision, pr1, pr2.
+  move => [Hr [H1 H2]].
+  move : (pointwise_preserve_stable H HAp) => Hst.
+  exists (pr1 (Aprudent_Bprudent H HAp)).
+  move : (propproperty (reliable (pr111 A) (exact_pair x)) Hr (pr1 HAp)) => [E _].
+  rewrite E in H1, H2. clear E.
+  unfold stable_revision', stable_revision, pr1, pr2 in Hst.
+  simpl in Hst.
+  apply prod_dest in Hst. simpl in Hst.
+  induction Hst as [Hst1 Hst2].
+  rewrite joinC in Hst2; apply meet_join in Hst2. 
+  move : (stable_consistent (pr1 (Aprudent_Bprudent H HAp))) => HBc.
+  move : (propproperty (reliable (pr111 B) (exact_pair x)) 
+    (pr1 (Aprudent_Bprudent H HAp)) (Aprudent_Breliable H HAp) ) => [E _].
+  rewrite E. rewrite E in HBc. clear E.
+  set x1 := (pr1 (dlfp (pr1 HAp))).
+  set x2 := (pr1 (ulfp (pr1 HAp))).
+  set y1 := (pr1 (dlfp (Aprudent_Breliable H HAp))).
+  set y2 := (pr1 (ulfp (Aprudent_Breliable H HAp))).  
+  assert (x1 ≺ y1) as Hxy1 by auto. clear Hst1.
+  assert (y2 ≺ x2) as Hyx2 by auto. clear Hst2.  
+  assert (y1 ≺ y2) as Hy by auto. clear HBc.
+  split.
+  - apply antisymL.
+    * rewrite H1; auto.
+    * apply transL with y2; auto.
+      rewrite H2; auto.
+  - apply antisymL.
+    * apply transL with y1; auto.
+      rewrite H1; auto.
+    * rewrite H2; auto.
+Qed.
+
+End pointwise_preserve.
+
+
+
+Definition imageOfInterval T (L : complat T) (O : L -> L) (p : L^c) : {set : L} :=
+  fun Oz => ∃ z, Oz == O z ∧ (pr11 p) ≺ z ∧ z ≺ (pr21 p).
+
+Definition ultimate T (L : complat T) (O : L -> L) : L^c -> L^c.
+Proof.
+  move => p.
+  split with ( (inf (imageOfInterval O p)),, (sup (imageOfInterval O p))).
+  unfold consistent, pr1, pr2.
+  induction p as [[x y] Hc].
+  apply transL with (O x); [apply is_lowb|apply is_upb].
+  all:unfold In => P; apply; clear P;
+      exists x; repeat split; auto;
+      apply reflL.
+Defined.
+
+Lemma partialApproximating_isaprop T (L : complat T) (A : L^c --> L^c) :
+  isaprop (partialApproximating A).
+Proof.
+  apply impred_isaprop => x.
+  simpl.
+  apply (propproperty (pr11 (A (exact_pair x)) = pr21 (A (exact_pair x)))%logic).
+Qed.
+
+
+
+Section ultimate.
+
+Variable T : hSet.
+Variable L : complat T.
+Variable O : L -> L.
+Variable p : L^c.
+Let x := pr11 p.
+Let y := pr21 p.
+Let Hc := pr2 p.
+
+Lemma ultimate_is_monotone :
+  is_monotone (L^c) (L^c) (ultimate O).
+Proof.
+  move => [[x1 x2] Hx] [[y1 y2] Hy] H.
+  simpl in H. apply prod_dest in H. induction H as [H1 H2]. simpl in H1, H2.
+  rewrite joinC in H2; apply meet_join in H2.
+  unfold ultimate => /=.
+  apply two_arg_paths.
+  - apply is_inf => b.
+    unfold In => Hb.
+    unfold imageOfInterval in Hb.
+    unfold ishinh, ishinh_UU, pr1, pr2 in Hb.
+    apply Hb => [[z [b_Oz [yz zy]]]].
+    apply is_lowb.
+    unfold In, imageOfInterval => P; apply; clear P.
+    exists z; repeat split; auto; unfold pr1, pr2.
+    * apply transL with y1; auto.
+    * apply transL with y2; auto.
+  - rewrite joinC. apply meet_join.
+    apply is_sup => b.
+    unfold In => Hb.
+    unfold imageOfInterval in Hb.
+    unfold ishinh, ishinh_UU, pr1, pr2 in Hb.
+    apply Hb => [[z [b_Oz [yz zy]]]].
+    apply is_upb.
+    unfold In, imageOfInterval => P; apply; clear P.
+    exists z; repeat split; auto; unfold pr1, pr2.
+    * apply transL with y1; auto.
+    * apply transL with y2; auto.
+Qed.
+
+Lemma ultimate_exact a :
+  ultimate O (exact_pair a) = exact_pair (O a).
+Proof.
+  apply antisymm_dcpo; simpl; apply two_arg_paths.
+  - apply is_lowb.
+    unfold In.
+    move => P; apply; exists a; repeat split; auto; apply reflL.
+  - rewrite joinC. apply meet_join.
+    apply is_upb.
+    unfold In.
+    move => P; apply; exists a; repeat split; auto; apply reflL.
+  - apply is_inf => b Hb.
+    unfold In, ishinh, ishinh_UU in Hb.
+    unfold imageOfInterval in Hb.
+    unfold ishinh, ishinh_UU in Hb.
+    apply Hb => [[z [E [az za]]]].
+    unfold pr1, pr2 in *.
+    rewrite (antisymL az za) E.
+    apply reflL.
+  - rewrite joinC. apply meet_join. 
+    apply is_sup => b Hb.
+    unfold In, ishinh, ishinh_UU in Hb.
+    unfold imageOfInterval, ishinh, ishinh_UU in Hb.
+    apply Hb => [[z [E [az za]]]].
+    unfold pr1, pr2 in *.
+    rewrite (antisymL az za) E.
+    apply reflL.
+Qed.    
+
+  
+Lemma partialApproximateing_ultimate :
+  partialApproximating (ultimate O,, ultimate_is_monotone).
+Proof.
+  move => a.
+  Set Printing Coercions.
+  unfold monotone_function_to_function, pr1, pr2.
+  rewrite ultimate_exact.
+  unfold exact_pair.
+  apply paths_refl.
+Qed.
+  
+
+Definition ultimateAppx := ((ultimate O,, ultimate_is_monotone),, partialApproximateing_ultimate).
+Definition ultimateAppxOf : AppxOf O := (ultimateAppx,, ultimate_exact).
+
+
+
+
+
+Lemma ultimate_is_greatest :
+  ∏ U : AppxOf O, (pr1 U) ⊏ (pr1 ultimateAppxOf).
+Proof.
+  unfold ultimateAppxOf.
+  move => [[[U Um] F] HU] [[a b] ab].
+  unfold ultimateAppx, pr1.
+  unfold partialApproximate, pr1 in HU.
+  clear F.
+  assert (∏ c, a ≺ c -> c ≺ b -> U ((a,, b),, ab) ≤ exact_pair (O c)) as H1. {
+    move => c ac cb.
+    rewrite <- (HU c).
+    apply Um.
+    simpl.
+    apply two_arg_paths; auto.
+    rewrite joinC; apply meet_join; auto.
+  }
+  assert ((pr11 (U ((a,, b),, ab))) ≺ (inf (imageOfInterval O ((a,, b),, ab)))). {
+    apply is_inf => d.
+    unfold In, imageOfInterval, ishinh, ishinh_UU.
+    apply => [[z [Hz [az zb]]]].
+    unfold pr1, pr2 in *.
+    rewrite Hz.
+    move : (H1 z az zb) => H0.
+    simpl in H0.
+    apply prod_dest in H0.
+    simpl in H0.
+    induction H0 as [H01 _]; auto.
+  }
+  assert ((sup (imageOfInterval O ((a,, b),, ab))) ≺ (pr21 (U ((a,, b),, ab)))). {
+    apply is_sup => d.
+    unfold In, imageOfInterval, ishinh, ishinh_UU.
+    apply => [[z [Hz [az zb]]]].
+    unfold pr1, pr2 in *.
+    rewrite Hz.
+    apply meet_join; rewrite joinC.
+    move : (H1 z az zb) => H0.
+    simpl in H0.
+    apply prod_dest in H0.
+    simpl in H0.
+    induction H0 as [_ H02]; auto.
+  }
+  simpl.
+  rewrite X.
+  apply meet_join in X0.  
+  rewrite joinC in X0.
+  rewrite X0; auto.
+Qed.
+
+
+
+
+Definition ultimate_kripke_kleene := kripke_kleene (pr2 ultimateAppx).
+ (* partialApproximateing_ultimate. *)
+Definition ultimate_well_founded := pr1 (well_founded ultimateAppx).
+Definition ultimate_partial_stable_fixpoint :=
+  stable_fixpoint ultimateAppx.
+Definition ultimate_stable_fixpoint x :=
+  stable_fixpoint ultimateAppx (exact_pair x).
+
+
+Lemma ultimate_kripke_kleene_is_greatest :
+  ∏ A : AppxOf O, kripke_kleene  (pr21 A) ≤ ultimate_kripke_kleene.
+Proof.
+  move => A.
+  unfold ultimate_kripke_kleene.
+  move : (pointwise_preserve_KK (ultimate_is_greatest A)).
+  move : (partialApproximating_isaprop 
+    (A := (ultimate O,, ultimate_is_monotone))
+    (pr2 ultimateAppx)
+    (pr21 ultimateAppxOf)
+  ) => [E _].
+  rewrite E; auto.
+Qed.
+
+Lemma ultimate_well_founded_is_greatest :
+  ∏ A : AppxOf O, pr1 (well_founded (pr1 A)) ≤ ultimate_well_founded.
+Proof.
+  move => A.
+  unfold ultimate_well_founded.
+  apply (pointwise_preserve_WF (ultimate_is_greatest A)).
+Qed.
+
+Print stable_fixpoint.
+
+Lemma stable_fixpoint_ultimate_stable_fixpoint :
+  ∏ (A : AppxOf O) (x : L), stable_fixpoint_of A x -> ultimate_stable_fixpoint x.
+Proof.  
+  move => A a H.
+  apply (pointwise_preserve_exact_stable_fixpoint (ultimate_is_greatest A) H).
+Qed.
+
+End ultimate.
+
+Lemma monotone_ultimate T (L : complat T) (O : L -> L) (p : L^c) (H : mono O) :
+  pr11 (ultimate O  p) = O (pr11 p) × pr21 (ultimate O p) = O (pr21 p).
+Proof.
+Check (mono O).
+  induction p as [[x y] Hc].
+  split; unfold ultimate => /=; apply antisymL; unfold imageOfInterval.
+  - apply is_lowb.
+    unfold In => P; apply; clear P.
+    exists x; repeat split; auto; apply reflL.
+  - apply is_inf.
+    move => b Hb.
+    unfold In, ishinh, ishinh_UU in Hb.
+    apply Hb => [[z[Hz [xz zy]]]].
+    unfold pr1, pr2 in *.
+    rewrite Hz; apply H; auto.
+  - apply is_sup.
+    move => b Hb.
+    unfold In, ishinh, ishinh_UU in Hb.
+    apply Hb => [[z[Hz [xz zy]]]].
+    unfold pr1, pr2 in *.
+    rewrite Hz; apply H; auto.
+  - apply is_upb.
+    unfold In => P; apply; clear P.
+    exists y; repeat split; auto; apply reflL.
+Qed.
+
+Lemma antimonotone_ultimate T (L : complat T) (O : L -> L) (p : L^c) (H : antimono O) :
+  pr11 (ultimate O  p) = O (pr21 p) × pr21 (ultimate O p) = O (pr11 p).
+Proof.
+  induction p as [[x y] Hc].
+  split; unfold ultimate => /=; apply antisymL; unfold imageOfInterval.
+  - apply is_lowb.
+    unfold In => P; apply; clear P.
+    exists y; repeat split; auto; apply reflL.
+  - apply is_inf.
+    move => b Hb.
+    unfold In, ishinh, ishinh_UU in Hb.
+    apply Hb => [[z[Hz [xz zy]]]].
+    unfold pr1, pr2 in *.
+    rewrite Hz; apply H; auto.
+  - apply is_sup.
+    move => b Hb.
+    unfold In, ishinh, ishinh_UU in Hb.
+    apply Hb => [[z[Hz [xz zy]]]].
+    unfold pr1, pr2 in *.
+    rewrite Hz; apply H; auto.
+  - apply is_upb.
+    unfold In => P; apply; clear P.
+    exists x; repeat split; auto; apply reflL.
+Qed.
+  
+
+
+
+
+
+
+  
+
+
+
+
+  
 
 
