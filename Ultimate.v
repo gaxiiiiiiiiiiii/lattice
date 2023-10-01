@@ -2177,18 +2177,3 @@ Proof.
     unfold In => P; apply; clear P.
     exists x; repeat split; auto; apply reflL.
 Qed.
-  
-
-
-
-
-
-
-  
-
-
-
-
-  
-
-

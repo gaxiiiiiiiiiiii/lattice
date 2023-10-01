@@ -827,6 +827,8 @@ Proof.
 Abort.  
 
 
+
+
 Lemma trivial_lfp {T} (L : complat T) (O : L -> L) (HO : mono O) :
   lfp (trivial O) (klemono_trivial HO) = lfp O HO,, lfp O HO.
 Proof.
